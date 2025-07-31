@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "TeamUpApp",
-    "slug": "TeamUpApp",
+    "slug": "teamup",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -37,6 +37,19 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "052afdc0-4cab-4799-897b-e8501948de0a"
+      }
+    },
+    "owner": "abder.elk",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/052afdc0-4cab-4799-897b-e8501948de0a"
     }
   }
 }

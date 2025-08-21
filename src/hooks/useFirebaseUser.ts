@@ -1,0 +1,1 @@
+// Données profil utilisateur depuis Firestore

@@ -1,0 +1,1 @@
+// Logique filtrage événements par critères

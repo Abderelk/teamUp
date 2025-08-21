@@ -1,0 +1,1 @@
+// Validation données avant écriture Firebase

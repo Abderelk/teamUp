@@ -1,0 +1,1 @@
+// Participants d'un événement en temps réel

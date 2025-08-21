@@ -1,0 +1,1 @@
+// État utilisateur connecté, login/logout

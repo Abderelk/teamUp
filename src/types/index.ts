@@ -1,0 +1,303 @@
+import { Timestamp } from 'firebase/firestore';
+
+// ===== TYPES DE BASE =====
+
+export type SkillLevel = 'beginner' | 'intermediate' | 'advanced';
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
+export type MessageType = 'text' | 'system' | 'image';
+export type NotificationType = 'event_invite' | 'team_invite' | 'event_update' | 'event_cancelled' | 'team_message' | 'general';
+
+// ===== INTERFACES GÉOLOCALISATION =====
+
+export interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
+export interface Location {
+  city: string;
+  coordinates: Coordinates;
+  maxDistance: number; // en km pour la recherche d'événements
+}
+
+export interface EventLocation {
+  name: string;
+  address: string;
+  city: string;
+  coordinates: Coordinates;
+}
+
+// ===== INTERFACES UTILISATEUR =====
+
+export interface UserConsents {
+  geolocation: boolean;
+  analytics: boolean;
+  marketing: boolean;
+  lastUpdated: Timestamp;
+}
+
+export interface NotificationPreferences {
+  events: boolean;
+  teams: boolean;
+  messages: boolean;
+  marketing: boolean;
+}
+
+export interface User {
+  uid: string; // ID Firebase Auth
+  email: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth?: Timestamp;
+  profilePicture?: string; // URL vers Firebase Storage
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  version: number;
+  
+  // Informations de géolocalisation
+  location?: Location;
+  
+  // Consentements RGPD
+  consents: UserConsents;
+  
+  // Préférences de notifications
+  notificationPreferences: NotificationPreferences;
+  
+  // Token FCM pour les notifications push
+  fcmTokens?: string[]; // array car un utilisateur peut avoir plusieurs devices
+}
+
+// ===== INTERFACES PROFIL SPORTIF =====
+
+export interface Availability {
+  day: DayOfWeek;
+  startTime: string; // "18:00"
+  endTime: string; // "22:00"
+}
+
+export interface SkillLevels {
+  [sport: string]: SkillLevel; // ex: { "football": "intermediate", "tennis": "beginner" }
+}
+
+export interface SportProfile {
+  userId: string; // Référence vers l'utilisateur
+  favoriteActivities: string[]; // ["football", "tennis", "basketball"]
+  skillLevels: SkillLevels;
+  availability: Availability[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// ===== INTERFACES ÉVÉNEMENTS =====
+
+export interface EventBooking {
+  isBooked: boolean;
+  terrainId?: string;
+  bookingReference?: string;
+}
+
+export interface Event {
+  id: string;
+  title: string;
+  description: string;
+  sport: string;
+  dateTime: Timestamp;
+  duration: number; // en minutes
+  maxParticipants: number;
+  currentParticipants: number;
+  requiredLevel: SkillLevel;
+  status: EventStatus;
+  
+  // Organisateur
+  organizerId: string;
+  organizerName: string;
+  
+  // Localisation
+  location: EventLocation;
+  
+  // Participants
+  participants: string[]; // Array des UIDs
+  waitingList: string[]; // Array des UIDs en attente
+  
+  // Réservation de terrain (optionnel)
+  booking?: EventBooking;
+  
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// ===== INTERFACES ÉQUIPES =====
+
+export interface TeamStats {
+  eventsCreated: number;
+  eventsCompleted: number;
+  totalMembers: number;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  description: string;
+  sport: string;
+  isPrivate: boolean;
+  
+  // Capitaine/Admin
+  captainId: string;
+  adminIds: string[];
+  
+  // Membres
+  memberIds: string[];
+  maxMembers: number;
+  
+  // Statistiques
+  stats: TeamStats;
+  
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// ===== INTERFACES MESSAGES =====
+
+export interface Message {
+  id: string;
+  authorId: string;
+  authorName: string;
+  content: string;
+  timestamp: Timestamp;
+  type: MessageType;
+}
+
+// ===== INTERFACES NOTIFICATIONS =====
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data?: Record<string, any>; // Données spécifiques selon le type
+  isRead: boolean;
+  createdAt: Timestamp;
+}
+
+// ===== INTERFACES LIEUX/TERRAINS =====
+
+export interface Venue {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  coordinates: Coordinates;
+  sports: string[]; // Sports supportés
+  isPublic: boolean; // Terrain municipal ou privé
+  bookingRequired: boolean;
+  apiEndpoint?: string; // Pour l'API municipale si applicable
+  facilities: string[]; // "parking", "vestiaires", etc.
+}
+
+// ===== TYPES UTILITAIRES =====
+
+// Type pour les créations (sans ID et timestamps)
+export type CreateUser = Omit<User, 'uid' | 'createdAt' | 'updatedAt' | 'version'>;
+export type CreateEvent = Omit<Event, 'id' | 'createdAt' | 'updatedAt' | 'currentParticipants'>;
+export type CreateTeam = Omit<Team, 'id' | 'createdAt' | 'updatedAt' | 'stats'>;
+export type CreateSportProfile = Omit<SportProfile, 'createdAt' | 'updatedAt'>;
+export type CreateMessage = Omit<Message, 'id' | 'timestamp'>;
+export type CreateNotification = Omit<Notification, 'id' | 'createdAt' | 'isRead'>;
+export type CreateVenue = Omit<Venue, 'id'>;
+
+// Type pour les mises à jour (champs optionnels)
+export type UpdateUser = Partial<Omit<User, 'uid' | 'createdAt'>> & { updatedAt: Timestamp };
+export type UpdateEvent = Partial<Omit<Event, 'id' | 'createdAt'>> & { updatedAt: Timestamp };
+export type UpdateTeam = Partial<Omit<Team, 'id' | 'createdAt'>> & { updatedAt: Timestamp };
+export type UpdateSportProfile = Partial<Omit<SportProfile, 'userId' | 'createdAt'>> & { updatedAt: Timestamp };
+
+// Types pour les filtres et recherches
+export interface EventFilters {
+  sport?: string;
+  city?: string;
+  dateFrom?: Timestamp;
+  dateTo?: Timestamp;
+  skillLevel?: SkillLevel;
+  maxDistance?: number;
+  userCoordinates?: Coordinates;
+}
+
+export interface TeamFilters {
+  sport?: string;
+  city?: string;
+  isPrivate?: boolean;
+  hasSpots?: boolean; // Équipes qui ont encore de la place
+}
+
+export interface UserSearchFilters {
+  city?: string;
+  sports?: string[];
+  skillLevel?: SkillLevel;
+  availability?: DayOfWeek[];
+}
+
+// ===== TYPES POUR LES RÉPONSES API =====
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  totalCount: number;
+  hasMore: boolean;
+  lastDoc?: any; // Pour la pagination Firestore
+}
+
+// ===== TYPES POUR LES HOOKS =====
+
+export interface UseAuthState {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+  isAuthenticated: boolean;
+}
+
+export interface UseEventsState {
+  events: Event[];
+  loading: boolean;
+  error: string | null;
+  hasMore: boolean;
+}
+
+export interface UseTeamsState {
+  teams: Team[];
+  loading: boolean;
+  error: string | null;
+  hasMore: boolean;
+}
+
+// ===== CONSTANTES =====
+
+export const SPORTS = [
+  'football',
+  'basketball',
+  'tennis',
+  'volleyball',
+  'badminton',
+  'handball',
+  'ping-pong',
+  'running',
+  'cycling',
+  'swimming',
+  'other'
+] as const;
+
+export type Sport = typeof SPORTS[number];
+
+export const SKILL_LEVELS: SkillLevel[] = ['beginner', 'intermediate', 'advanced'];
+export const DAYS_OF_WEEK: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+export const EVENT_STATUSES: EventStatus[] = ['draft', 'published', 'cancelled', 'completed'];
+export const MESSAGE_TYPES: MessageType[] = ['text', 'system', 'image'];
+export const NOTIFICATION_TYPES: NotificationType[] = ['event_invite', 'team_invite', 'event_update', 'event_cancelled', 'team_message', 'general'];

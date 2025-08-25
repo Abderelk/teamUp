@@ -1,4 +1,4 @@
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { 
   getUserProfile, 
@@ -6,13 +6,13 @@ import {
   signInWithEmail, 
   signUpWithEmail, 
   signInWithGoogle,
-  UserProfile 
 } from '../services/firebase/auth';
 import { auth } from '../services/firebase/config';
+import { User as AppUser } from '../types/index';
 
 interface AuthState {
-    user: User | null;
-    userProfile: UserProfile | null;
+    user: FirebaseUser | null;
+    userProfile: AppUser | null;
     loading: boolean;
     error: string | null;
 }
@@ -65,8 +65,7 @@ export const useAuth = () => {
     const register = async (email: string, password: string, firstName: string, lastName: string) => {
         try {
             setAuthState(prev => ({ ...prev, loading: true, error: null }));
-            const displayName = `${firstName} ${lastName}`;
-            await signUpWithEmail(email, password, displayName);
+            await signUpWithEmail(email, password, firstName, lastName);
         } catch (error) {
             setAuthState(prev => ({
                 ...prev,

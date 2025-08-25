@@ -2,46 +2,61 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signOut,
-  User,
+  User as FirebaseUser,
   AuthError,
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from './config';
-
-export interface UserProfile {
-  uid: string;
-  email: string;
-  displayName: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { User as AppUser } from '../../types/index';
 
 // 🔄 Fonction commune pour gérer les profils utilisateur
-const handleUserProfile = async (user: User, displayName?: string): Promise<void> => {
-  const userRef = doc(db, 'users', user.uid);
+const handleUserProfile = async (firebaseUser: FirebaseUser, firstName?: string, lastName?: string): Promise<AppUser> => {
+  const userRef = doc(db, 'users', firebaseUser.uid);
   const userSnap = await getDoc(userRef);
   
   if (!userSnap.exists()) {
-    const userProfile: UserProfile = {
-      uid: user.uid,
-      email: user.email!,
-      displayName: displayName || user.displayName || user.email!,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    const appUser: AppUser = {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email!,
+      firstName: firstName || firebaseUser.displayName?.split(' ')[0] || '',
+      lastName: lastName || firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
+      isActive: true,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      version: 1,
+      consents: {
+        geolocation: false,
+        analytics: false,
+        marketing: false,
+        lastUpdated: Timestamp.now(),
+      },
+      notificationPreferences: {
+        events: true,
+        teams: true,
+        messages: true,
+        marketing: false,
+      },
     };
-    await setDoc(userRef, userProfile);
+    await setDoc(userRef, appUser);
+    return appUser;
   } else {
-    await setDoc(userRef, { updatedAt: new Date() }, { merge: true });
+    const existingUser = userSnap.data() as AppUser;
+    const updatedUser = { 
+      ...existingUser, 
+      updatedAt: Timestamp.now() 
+    };
+    await setDoc(userRef, updatedUser, { merge: true });
+    return updatedUser;
   }
 };
 
 // 📧 Connexion avec email et mot de passe
-export const signInWithEmail = async (email: string, password: string): Promise<User> => {
+export const signInWithEmail = async (email: string, password: string): Promise<AppUser> => {
   try {
     const { user } = await signInWithEmailAndPassword(auth, email, password);
-    return user;
+    return await handleUserProfile(user);
   } catch (error) {
     throw new Error(getAuthErrorMessage((error as AuthError).code));
   }
@@ -51,12 +66,12 @@ export const signInWithEmail = async (email: string, password: string): Promise<
 export const signUpWithEmail = async (
   email: string, 
   password: string, 
-  displayName: string
-): Promise<User> => {
+  firstName: string,
+  lastName: string
+): Promise<AppUser> => {
   try {
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
-    await handleUserProfile(user, displayName);
-    return user;
+    return await handleUserProfile(user, firstName, lastName);
   } catch (error) {
     throw new Error(getAuthErrorMessage((error as AuthError).code));
   }
@@ -72,27 +87,26 @@ export const logOut = async (): Promise<void> => {
 };
 
 // 🔍 Google Sign-In
-export const signInWithGoogle = async (): Promise<User> => {
+export const signInWithGoogle = async (): Promise<AppUser> => {
   try {
     const provider = new GoogleAuthProvider();
     provider.addScope('email');
     provider.addScope('profile');
     
     const { user } = await signInWithPopup(auth, provider);
-    await handleUserProfile(user);
-    return user;
+    return await handleUserProfile(user);
   } catch (error) {
     console.error('Erreur connexion Google:', error);
     throw new Error('Erreur lors de la connexion avec Google');
   }
 };
 
-//  Récupérer le profil utilisateur
-export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
+// 👤 Récupérer le profil utilisateur
+export const getUserProfile = async (uid: string): Promise<AppUser | null> => {
   try {
     const docRef = doc(db, 'users', uid);
     const docSnap = await getDoc(docRef);
-    return docSnap.exists() ? docSnap.data() as UserProfile : null;
+    return docSnap.exists() ? docSnap.data() as AppUser : null;
   } catch (error) {
     console.error('Erreur lors de la récupération du profil:', error);
     return null;

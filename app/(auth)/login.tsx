@@ -78,11 +78,7 @@ export default function LoginScreen() {
     };
 
     const navigateToForgotPassword = () => {
-        Alert.alert(
-            'Mot de passe oublié',
-            'Cette fonctionnalité sera bientôt disponible.',
-            [{ text: 'OK' }]
-        );
+        router.push('/(auth)/forgot-password');
     };
 
     return (

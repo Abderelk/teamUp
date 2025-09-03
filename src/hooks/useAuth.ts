@@ -6,6 +6,7 @@ import {
   signInWithEmail, 
   signUpWithEmail, 
   signInWithGoogle,
+  resetPassword,
 } from '../services/firebase/auth';
 import { auth } from '../services/firebase/config';
 import { User as AppUser } from '../types/index';
@@ -101,6 +102,22 @@ export const useAuth = () => {
         }
     };
 
+    const resetUserPassword = async (email: string) => {
+        try {
+            setAuthState(prev => ({ ...prev, loading: true, error: null }));
+            await resetPassword(email);
+        } catch (error) {
+            setAuthState(prev => ({
+                ...prev,
+                loading: false,
+                error: error instanceof Error ? error.message : 'Erreur lors de la réinitialisation du mot de passe'
+            }));
+            throw error; // Re-throw to allow the component to handle the error
+        } finally {
+            setAuthState(prev => ({ ...prev, loading: false }));
+        }
+    };
+
     const clearError = () => {
         setAuthState(prev => ({ ...prev, error: null }));
     };
@@ -114,6 +131,7 @@ export const useAuth = () => {
         register,
         logout,
         loginWithGoogle,
+        resetPassword: resetUserPassword,
         clearError,
         isAuthenticated: !!authState.user,
     };

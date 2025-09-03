@@ -2,6 +2,7 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signOut,
+  sendPasswordResetEmail,
   User as FirebaseUser,
   AuthError,
   GoogleAuthProvider,
@@ -110,6 +111,17 @@ export const getUserProfile = async (uid: string): Promise<AppUser | null> => {
   } catch (error) {
     console.error('Erreur lors de la récupération du profil:', error);
     return null;
+  }
+};
+
+// 🔄 Réinitialisation du mot de passe
+export const resetPassword = async (email: string): Promise<void> => {
+  try {
+    // Configurer la langue en français pour les emails
+    auth.languageCode = 'fr';
+    await sendPasswordResetEmail(auth, email);
+  } catch (error) {
+    throw new Error(getAuthErrorMessage((error as AuthError).code));
   }
 };
 

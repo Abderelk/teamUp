@@ -16,7 +16,7 @@ export default function AccountScreen() {
       icon: 'person-outline',
       title: 'Modifier le profil',
       subtitle: 'Mettre à jour vos informations personnelles',
-      href: '/account/edit-profile'
+      href: '/account/edit-profile?returnTo=/account'
     },
     {
       icon: 'notifications-outline',

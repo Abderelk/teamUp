@@ -393,12 +393,13 @@ export default function EventDetailScreen() {
                   {joinRestriction.needsProfileCompletion && (
                     <TouchableOpacity
                       style={styles.completeProfileButton}
-                      onPress={() => router.push('/account/edit-profile')}
+                      onPress={() => router.push(`/account/edit-profile?returnTo=/event/${eventId}`)}
                     >
                       <Ionicons name="person-add" size={16} color="#007AFF" />
                       <Text style={styles.completeProfileButtonText}>Compléter mon profil</Text>
                     </TouchableOpacity>
                   )}
+                
                 </View>
               )}
               

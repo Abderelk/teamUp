@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from 'react-native';
 import { useAuth } from '../src/hooks/useAuth';
 import { OnboardingProvider } from '../src/contexts/OnboardingContext';
+import { AlertProvider } from '../src/hooks/useAlert';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -88,17 +89,19 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <OnboardingProvider>
-        <Stack>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-          <Stack.Screen name="account" options={{ headerShown: false }} />
-          <Stack.Screen name="event" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="auto" />
-      </OnboardingProvider>
+      <AlertProvider>
+        <OnboardingProvider>
+          <Stack>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+            <Stack.Screen name="account" options={{ headerShown: false }} />
+            <Stack.Screen name="event" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="auto" />
+        </OnboardingProvider>
+      </AlertProvider>
     </ThemeProvider>
   );
 }

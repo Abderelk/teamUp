@@ -18,6 +18,7 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../src/services/firebase/config';
 import { SPORTS, SkillLevel, DayOfWeek } from '../../src/types/index';
+import { useAlertHelpers } from '../../src/hooks/useAlert';
 
 // Traductions des sports
 const SPORTS_TRANSLATIONS: Record<string, string> = {
@@ -51,6 +52,7 @@ const SKILL_COLORS: Record<SkillLevel, string> = {
 export default function EditProfileScreen() {
   const { userProfile, refreshUserProfile } = useAuth();
   const params = useLocalSearchParams();
+  const { showSuccess, showError } = useAlertHelpers();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -118,19 +120,27 @@ export default function EditProfileScreen() {
 
       await refreshUserProfile();
       
-      if (Platform.OS === 'web') {
-        const returnTo = params.returnTo as string;
-        if (returnTo) {
-          router.push(returnTo);
+      const handleNavigation = () => {
+        if (Platform.OS === 'web') {
+          const returnTo = params.returnTo as string;
+          if (returnTo) {
+            router.push(returnTo);
+          } else {
+            router.push('/account');
+          }
         } else {
-          router.push('/account');
+          router.back();
         }
-      } else {
-        router.back();
-      }
+      };
+      
+      showSuccess(
+        'Profil mis à jour !',
+        'Vos informations ont été sauvegardées avec succès.',
+        handleNavigation
+      );
     } catch (error) {
       console.error('Error updating profile:', error);
-      Alert.alert('Erreur', 'Échec de la mise à jour du profil. Veuillez réessayer.');
+      showError('Erreur', 'Échec de la mise à jour du profil. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }

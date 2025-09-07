@@ -19,6 +19,7 @@ import { getSkillLevelIcon, getSkillLevelColor } from '../../src/utils/skillLeve
 import { canUserJoinEvent } from '../../src/utils/eventRestrictions';
 import { Toast } from '../../src/components/Toast';
 import { useToast } from '../../src/hooks/useToast';
+import { useAlertHelpers } from '../../src/hooks/useAlert';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../src/services/firebase/config';
 import { useCallback } from 'react';
@@ -28,7 +29,8 @@ const { width } = Dimensions.get('window');
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams();
   const { userProfile, refreshUserProfile } = useAuth();
-  const { toast, showSuccess, showError, hideToast } = useToast();
+  const { toast, showSuccess, showError: showToastError, hideToast } = useToast();
+  const { showError, showConfirm, showDestructive } = useAlertHelpers();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -45,8 +47,7 @@ export default function EventDetailScreen() {
       const eventData = await getEvent(eventId);
       
       if (!eventData) {
-        Alert.alert('Erreur', 'Événement introuvable');
-        router.back();
+        showError('Erreur', 'Événement introuvable', () => router.back());
         return;
       }
       setEvent(eventData);
@@ -57,8 +58,7 @@ export default function EventDetailScreen() {
       }
     } catch (error) {
       console.error('Error loading event:', error);
-      Alert.alert('Erreur', 'Impossible de charger l\'événement');
-      router.back();
+      showError('Erreur', 'Impossible de charger l\'événement', () => router.back());
     } finally {
       setLoading(false);
     }
@@ -122,26 +122,18 @@ export default function EventDetailScreen() {
           showSuccess('Vous avez quitté l\'événement');
         })
         .catch((error: any) => {
-          showError(error.message || 'Impossible de quitter l\'événement');
+          showToastError(error.message || 'Impossible de quitter l\'événement');
         })
         .finally(() => {
           setActionLoading(false);
         });
     };
 
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Êtes-vous sûr de vouloir quitter cet événement ?');
-      if (confirmed) confirmLeave();
-    } else {
-      Alert.alert(
-        'Quitter l\'événement',
-        'Êtes-vous sûr de vouloir quitter cet événement ?',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Quitter', style: 'destructive', onPress: confirmLeave }
-        ]
-      );
-    }
+    showConfirm(
+      'Quitter l\'événement',
+      'Êtes-vous sûr de vouloir quitter cet événement ?',
+      confirmLeave
+    );
   };
 
   const handleDeleteEvent = async () => {
@@ -155,26 +147,18 @@ export default function EventDetailScreen() {
           setTimeout(() => router.replace('/(tabs)/events'), 1000);
         })
         .catch((error: any) => {
-          showError(error.message || 'Impossible de supprimer l\'événement');
+          showToastError(error.message || 'Impossible de supprimer l\'événement');
         })
         .finally(() => {
           setActionLoading(false);
         });
     };
 
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Êtes-vous sûr de vouloir supprimer cet événement ?');
-      if (confirmed) confirmDelete();
-    } else {
-      Alert.alert(
-        'Supprimer l\'événement',
-        'Êtes-vous sûr de vouloir supprimer cet événement ?',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Supprimer', style: 'destructive', onPress: confirmDelete }
-        ]
-      );
-    }
+    showDestructive(
+      'Supprimer l\'événement',
+      'Êtes-vous sûr de vouloir supprimer cet événement ?',
+      confirmDelete
+    );
   };
 
   useEffect(() => {

@@ -12,7 +12,7 @@ import {
   FlatList,
   Platform
 } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/hooks/useAuth';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
@@ -50,6 +50,7 @@ const SKILL_COLORS: Record<SkillLevel, string> = {
 
 export default function EditProfileScreen() {
   const { userProfile, refreshUserProfile } = useAuth();
+  const params = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -117,9 +118,16 @@ export default function EditProfileScreen() {
 
       await refreshUserProfile();
       
-      Alert.alert('Succès', 'Profil mis à jour avec succès !', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
+      if (Platform.OS === 'web') {
+        const returnTo = params.returnTo as string;
+        if (returnTo) {
+          router.push(returnTo);
+        } else {
+          router.push('/account');
+        }
+      } else {
+        router.back();
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
       Alert.alert('Erreur', 'Échec de la mise à jour du profil. Veuillez réessayer.');

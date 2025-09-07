@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/hooks/useAuth';
-import { router } from 'expo-router';
+import { router, Link } from 'expo-router';
 
 export default function AccountScreen() {
   const { user, userProfile, logout } = useAuth();
@@ -16,33 +16,37 @@ export default function AccountScreen() {
       icon: 'person-outline',
       title: 'Modifier le profil',
       subtitle: 'Mettre à jour vos informations personnelles',
-      onPress: () => {
-        router.push('/account/edit-profile');
-      }
+      href: '/account/edit-profile'
     },
     {
       icon: 'notifications-outline',
       title: 'Notifications',
       subtitle: 'Gérer vos préférences de notification',
-      onPress: () => {
-        router.push('/account/notifications');
-      }
+      href: '/account/notifications'
+    },
+    {
+      icon: 'settings-outline',
+      title: 'Paramètres de l\'app',
+      subtitle: 'Personnaliser le comportement de l\'application',
+      href: '/account/app-settings'
     },
     {
       icon: 'shield-outline',
       title: 'Confidentialité et sécurité',
       subtitle: 'Contrôler vos paramètres de confidentialité',
-      onPress: () => {
-        router.push('/account/privacy');
-      }
+      href: '/account/privacy'
     },
     {
       icon: 'help-circle-outline',
       title: 'Aide et support',
       subtitle: 'Obtenir de l\'aide et contacter le support',
-      onPress: () => {
-        router.push('/account/help');
-      }
+      href: '/account/help'
+    },
+    {
+      icon: 'chatbubble-ellipses-outline',
+      title: 'Envoyer un feedback',
+      subtitle: 'Partagez vos idées et suggestions',
+      href: '/account/feedback'
     },
     {
       icon: 'information-circle-outline',
@@ -69,22 +73,46 @@ export default function AccountScreen() {
 
       {/* Menu Items */}
       <View style={styles.menuContainer}>
-        {menuItems.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.menuItem}
-            onPress={item.onPress}
-          >
-            <View style={styles.menuItemLeft}>
-              <Ionicons name={item.icon as any} size={24} color="#007AFF" />
-              <View style={styles.menuItemText}>
-                <Text style={styles.menuItemTitle}>{item.title}</Text>
-                <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
-          </TouchableOpacity>
-        ))}
+        {menuItems.map((item, index) => {
+          if (item.href) {
+            return (
+              <TouchableOpacity 
+                key={index}
+                style={styles.menuItem}
+                onPress={() => {
+                  console.log(`Navigating to: ${item.href}`);
+                  router.push(item.href as any);
+                }}
+              >
+                <View style={styles.menuItemLeft}>
+                  <Ionicons name={item.icon as any} size={24} color="#007AFF" />
+                  <View style={styles.menuItemText}>
+                    <Text style={styles.menuItemTitle}>{item.title}</Text>
+                    <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+              </TouchableOpacity>
+            );
+          } else {
+            return (
+              <TouchableOpacity
+                key={index}
+                style={styles.menuItem}
+                onPress={item.onPress}
+              >
+                <View style={styles.menuItemLeft}>
+                  <Ionicons name={item.icon as any} size={24} color="#007AFF" />
+                  <View style={styles.menuItemText}>
+                    <Text style={styles.menuItemTitle}>{item.title}</Text>
+                    <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+              </TouchableOpacity>
+            );
+          }
+        })}
       </View>
 
       {/* Sign Out Button */}

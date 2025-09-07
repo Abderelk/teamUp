@@ -39,6 +39,7 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
     const inTabsGroup = segments[0] === '(tabs)';
+    const inAccountGroup = segments[0] === 'account';
 
 
     // Utilisateur non authentifié
@@ -64,13 +65,13 @@ export default function RootLayout() {
         router.replace('/(onboarding)');
       }
     } else {
-      if (!inTabsGroup && lastRedirect !== 'main') {
+      if (!inTabsGroup && !inAccountGroup && lastRedirect !== 'main') {
         setLastRedirect('main');
         router.replace('/(tabs)/events');
       }
     }
 
-    if ((isAuthenticated && userProfile?.onboardingCompleted && inTabsGroup) ||
+    if ((isAuthenticated && userProfile?.onboardingCompleted && (inTabsGroup || inAccountGroup)) ||
         (isAuthenticated && !userProfile?.onboardingCompleted && inOnboardingGroup) ||
         (!isAuthenticated && inAuthGroup)) {
       if (lastRedirect) {
@@ -91,6 +92,7 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+          <Stack.Screen name="account" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
         <StatusBar style="auto" />

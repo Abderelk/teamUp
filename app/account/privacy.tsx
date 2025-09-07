@@ -155,18 +155,34 @@ export default function PrivacyScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Donnees et securite</Text>
           
-          <TouchableOpacity style={styles.actionItem}>
+          <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/account/data-management')}>
             <View style={styles.actionLeft}>
               <Ionicons name="download-outline" size={24} color="#007AFF" />
-              <Text style={styles.actionTitle}>Telecharger mes donnees</Text>
+              <Text style={styles.actionTitle}>Gerer mes donnees</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionItem}>
+          <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/account/change-password')}>
             <View style={styles.actionLeft}>
               <Ionicons name="shield-checkmark-outline" size={24} color="#007AFF" />
               <Text style={styles.actionTitle}>Changer le mot de passe</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/account/terms')}>
+            <View style={styles.actionLeft}>
+              <Ionicons name="document-text-outline" size={24} color="#007AFF" />
+              <Text style={styles.actionTitle}>Conditions d'utilisation</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/account/privacy-policy')}>
+            <View style={styles.actionLeft}>
+              <Ionicons name="lock-closed-outline" size={24} color="#007AFF" />
+              <Text style={styles.actionTitle}>Politique de confidentialite</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>

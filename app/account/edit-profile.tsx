@@ -9,7 +9,8 @@ import {
   Alert, 
   ActivityIndicator,
   Modal,
-  FlatList
+  FlatList,
+  Platform
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -115,6 +116,7 @@ export default function EditProfileScreen() {
       await updateDoc(userDocRef, updateData);
 
       await refreshUserProfile();
+      
       Alert.alert('Succès', 'Profil mis à jour avec succès !', [
         { text: 'OK', onPress: () => router.back() }
       ]);

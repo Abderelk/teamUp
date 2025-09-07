@@ -1,43 +1,55 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Règles pour les utilisateurs - chaque utilisateur ne peut accéder qu'à ses propres données
+    // Règles pour les profils utilisateur
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && request.auth.uid == userId
+        && validateUserData(request.resource.data);
+      allow delete: if false; // Pas de suppression de profil
     }
     
-    // Règles pour les équipes - seuls les membres peuvent y accéder
-    match /teams/{teamId} {
-      allow read, write: if request.auth != null && 
-        request.auth.uid in resource.data.members;
-      allow create: if request.auth != null;
-    }
-    
-    // Règles pour les événements - seuls les participants peuvent y accéder
+    // Règles pour les événements
     match /events/{eventId} {
-      allow read, write: if request.auth != null && 
-        (request.auth.uid == resource.data.createdBy || 
-         request.auth.uid in resource.data.participants);
-      allow create: if request.auth != null;
+      allow read: if request.auth != null;
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.organizerId
+        && validateEventData(request.resource.data);
+      allow update: if request.auth != null 
+        && request.auth.uid == resource.data.organizerId
+        && validateEventData(request.resource.data);
+      allow delete: if request.auth != null 
+        && request.auth.uid == resource.data.organizerId;
     }
     
-    // Règles pour les messages d'équipes - seuls les membres de l'équipe peuvent y accéder
-    match /teams/{teamId}/messages/{messageId} {
-      allow read, write: if request.auth != null && 
-        request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members;
+    // Fonctions de validation
+    function validateUserData(data) {
+      return data.keys().hasAll(['firstName', 'lastName', 'email', 'uid'])
+        && data.firstName is string && data.firstName.size() > 0 && data.firstName.size() <= 50
+        && data.lastName is string && data.lastName.size() > 0 && data.lastName.size() <= 50
+        && data.email is string && data.email.matches('.*@.*\\..*')
+        && data.uid is string;
     }
     
-    // Règles pour les messages d'événements - seuls les participants peuvent y accéder
-    match /events/{eventId}/messages/{messageId} {
-      allow read, write: if request.auth != null && 
-        (request.auth.uid == get(/databases/$(database)/documents/events/$(eventId)).data.createdBy || 
-         request.auth.uid in get(/databases/$(database)/documents/events/$(eventId)).data.participants);
+    function validateEventData(data) {
+      return data.keys().hasAll(['title', 'sport', 'dateTime', 'duration', 'maxParticipants', 'requiredLevel', 'status', 'organizerId', 'location'])
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 100
+        && data.description is string && data.description.size() <= 500
+        && data.sport is string && data.sport in ['football', 'basketball', 'tennis', 'volleyball', 'badminton', 'handball', 'ping-pong', 'running', 'cycling', 'swimming', 'other']
+        && data.dateTime is timestamp
+        && data.duration is number && data.duration >= 30 && data.duration <= 300
+        && data.maxParticipants is number && data.maxParticipants >= 2 && data.maxParticipants <= 30
+        && data.requiredLevel is string && data.requiredLevel in ['beginner', 'intermediate', 'advanced']
+        && data.status is string && data.status in ['draft', 'published', 'cancelled', 'completed']
+        && data.organizerId is string
+        && validateLocationData(data.location);
     }
     
-    // Interdire l'accès à tout autre document
-    match /{document=**} {
-      allow read, write: if false;
+    function validateLocationData(location) {
+      return location.keys().hasAll(['city'])
+        && location.city is string && location.city.size() > 0 && location.city.size() <= 100
+        && (!('name' in location) || (location.name is string && location.name.size() <= 100))
+        && (!('address' in location) || (location.address is string && location.address.size() <= 200));
     }
   }
 }

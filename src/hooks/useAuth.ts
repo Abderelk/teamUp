@@ -94,12 +94,22 @@ export const useAuth = () => {
         try {
             setAuthState(prev => ({ ...prev, loading: true, error: null }));
             await logOut();
+            
+            // Force immediate state update in case onAuthStateChanged doesn't trigger quickly enough
+            setAuthState({
+                user: null,
+                userProfile: null,
+                loading: false,
+                error: null,
+            });
+            
         } catch (error) {
             setAuthState(prev => ({
                 ...prev,
                 loading: false,
                 error: error instanceof Error ? error.message : 'Erreur de déconnexion'
             }));
+            throw error;
         }
     };
 

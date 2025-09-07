@@ -13,27 +13,27 @@ export default function TabLayout() {
       <Tabs.Screen
         name="events"
         options={{
-          title: 'Events',
+          title: 'Événements',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="teams"
+        name="team"
         options={{
-          title: 'Teams',
+          title: 'Équipes',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="account"
         options={{
-          title: 'Profile',
+          title: 'Compte',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+            <Ionicons name="person-circle-outline" size={size} color={color} />
           ),
         }}
       />

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
     ActivityIndicator,
     KeyboardAvoidingView,
@@ -47,15 +47,11 @@ export default function RegisterScreen() {
         confirmPassword: null as string | null,
     });
 
-    const { register, loading, error, clearError, isAuthenticated, loginWithGoogle } = useAuth();
+    const { register, loading, error, clearError, loginWithGoogle } = useAuth();
     const router = useRouter();
 
-    // Rediriger si l'utilisateur est déjà connecté
-    useEffect(() => {
-        if (isAuthenticated) {
-            router.replace('/(tabs)/events');
-        }
-    }, [isAuthenticated, router]);
+    // La redirection est maintenant gérée par _layout.tsx
+    // Pas besoin de logique de redirection ici
 
     const handleInputChange = (field: keyof typeof formData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));

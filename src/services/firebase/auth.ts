@@ -39,6 +39,7 @@ const handleUserProfile = async (firebaseUser: FirebaseUser, firstName?: string,
         messages: true,
         marketing: false,
       },
+      onboardingCompleted: false,
     };
     await setDoc(userRef, appUser);
     return appUser;

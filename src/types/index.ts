@@ -67,6 +67,9 @@ export interface User {
   
   // Token FCM pour les notifications push
   fcmTokens?: string[]; // array car un utilisateur peut avoir plusieurs devices
+  
+  // Onboarding status
+  onboardingCompleted?: boolean;
 }
 
 // ===== INTERFACES PROFIL SPORTIF =====

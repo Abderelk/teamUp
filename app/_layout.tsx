@@ -2,11 +2,12 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from 'react-native';
 import { useAuth } from '../src/hooks/useAuth';
+import { OnboardingProvider } from '../src/contexts/OnboardingContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -14,23 +15,69 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, userProfile } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const [navigationReady, setNavigationReady] = useState(false);
+  const [lastRedirect, setLastRedirect] = useState('');
 
   useEffect(() => {
-    if (loading) return; // Attendre que l'état d'authentification soit chargé
+    // Attendre que tout soit prêt avant de commencer la navigation
+    if (loading || !loaded) return;
 
+    // Délai pour s'assurer que la navigation est stable
+    const timer = setTimeout(() => {
+      setNavigationReady(true);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [loading, loaded]);
+
+  useEffect(() => {
+    if (!navigationReady || loading) return;
+    
     const inAuthGroup = segments[0] === '(auth)';
+    const inOnboardingGroup = segments[0] === '(onboarding)';
+    const inTabsGroup = segments[0] === '(tabs)';
 
-    if (isAuthenticated && inAuthGroup) {
-      // L'utilisateur est connecté mais sur une page d'auth, rediriger vers les tabs
-      router.replace('/(tabs)/events');
-    } else if (!isAuthenticated && !inAuthGroup) {
-      // L'utilisateur n'est pas connecté et pas sur une page d'auth, rediriger vers login
-      router.replace('/(auth)/login');
+
+    // Utilisateur non authentifié
+    if (!isAuthenticated) {
+      if (!inAuthGroup && lastRedirect !== 'login') {
+        setLastRedirect('login');
+        router.replace('/(auth)/login');
+      }
+      return;
     }
-  }, [isAuthenticated, segments, loading, router]);
+
+    if (!userProfile) {
+      if (!inOnboardingGroup && lastRedirect !== 'onboarding') {
+        setLastRedirect('onboarding');
+        router.replace('/(onboarding)');
+      }
+      return;
+    }
+
+    if (!userProfile.onboardingCompleted) {
+      if (!inOnboardingGroup && lastRedirect !== 'onboarding') {
+        setLastRedirect('onboarding');
+        router.replace('/(onboarding)');
+      }
+    } else {
+      if (!inTabsGroup && lastRedirect !== 'main') {
+        setLastRedirect('main');
+        router.replace('/(tabs)/events');
+      }
+    }
+
+    if ((isAuthenticated && userProfile?.onboardingCompleted && inTabsGroup) ||
+        (isAuthenticated && !userProfile?.onboardingCompleted && inOnboardingGroup) ||
+        (!isAuthenticated && inAuthGroup)) {
+      if (lastRedirect) {
+        setLastRedirect('');
+      }
+    }
+  }, [navigationReady, isAuthenticated, userProfile, segments[0]]);
 
   if (!loaded || loading) {
     // Afficher un écran de chargement pendant que les fonts et l'auth se chargent
@@ -39,12 +86,15 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
+      <OnboardingProvider>
+        <Stack>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="auto" />
+      </OnboardingProvider>
     </ThemeProvider>
   );
 }

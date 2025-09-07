@@ -8,7 +8,7 @@ import {
   signInWithGoogle,
   resetPassword,
 } from '../services/firebase/auth';
-import { auth } from '../services/firebase/config';
+import { auth, initializeFirebaseConnection } from '../services/firebase/config';
 import { User as AppUser } from '../types/index';
 
 interface AuthState {
@@ -27,9 +27,10 @@ export const useAuth = () => {
     });
 
     useEffect(() => {
+        initializeFirebaseConnection();
+
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Récupérer le profil utilisateur
                 const userProfile = await getUserProfile(user.uid);
                 setAuthState({
                     user,
@@ -122,6 +123,13 @@ export const useAuth = () => {
         setAuthState(prev => ({ ...prev, error: null }));
     };
 
+    const refreshUserProfile = async () => {
+        if (authState.user) {
+            const userProfile = await getUserProfile(authState.user.uid);
+            setAuthState(prev => ({ ...prev, userProfile }));
+        }
+    };
+
     return {
         user: authState.user,
         userProfile: authState.userProfile,
@@ -133,6 +141,7 @@ export const useAuth = () => {
         loginWithGoogle,
         resetPassword: resetUserPassword,
         clearError,
+        refreshUserProfile,
         isAuthenticated: !!authState.user,
     };
 };

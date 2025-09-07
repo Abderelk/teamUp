@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
     ActivityIndicator,
     KeyboardAvoidingView,
@@ -24,15 +24,11 @@ export default function LoginScreen() {
     const [emailError, setEmailError] = useState<string | null>(null);
     const [passwordError, setPasswordError] = useState<string | null>(null);
 
-    const { login, loading, error, clearError, isAuthenticated, loginWithGoogle } = useAuth();
+    const { login, loading, error, clearError, loginWithGoogle } = useAuth();
     const router = useRouter();
 
-    // Rediriger si l'utilisateur est déjà connecté
-    useEffect(() => {
-        if (isAuthenticated) {
-            router.replace('/(tabs)/events');
-        }
-    }, [isAuthenticated, router]);
+    // La redirection est maintenant gérée par _layout.tsx
+    // Pas besoin de logique de redirection ici
 
     const handleEmailChange = (text: string) => {
         setEmail(text);

@@ -143,7 +143,7 @@ export default function ForgotPasswordScreen() {
                             ) : (
                                 <>
                                     <Ionicons name="mail-outline" size={20} color="white" style={styles.buttonIcon} />
-                                    <Text style={styles.resetButtonText}>Envoyer l'email</Text>
+                                    <Text style={styles.resetButtonText}>Envoyer l&apos;email</Text>
                                 </>
                             )}
                         </TouchableOpacity>
@@ -170,15 +170,15 @@ export default function ForgotPasswordScreen() {
                         <View style={styles.spamWarning}>
                             <Ionicons name="warning-outline" size={20} color="#F59E0B" style={styles.warningIcon} />
                             <Text style={styles.spamWarningText}>
-                                ⚠️ N'oubliez pas de vérifier votre dossier spam/indésirables !
+                                ⚠️ N&apos;oubliez pas de vérifier votre dossier spam/indésirables !
                             </Text>
                         </View>
                         <Text style={styles.helpText}>
-                            Vous n'arrivez pas à recevoir l'email ? Vérifiez votre dossier spam ou
+                            Vous n&apos;arrivez pas à recevoir l&apos;email ? Vérifiez votre dossier spam ou
                         </Text>
                         <TouchableOpacity onPress={handleResetPassword} disabled={isLoading}>
                             <Text style={[styles.helpLink, isLoading && styles.helpLinkDisabled]}>
-                                renvoyer l'email
+                                renvoyer l&apos;email
                             </Text>
                         </TouchableOpacity>
                     </View>

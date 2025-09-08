@@ -124,7 +124,7 @@ export default function EditProfileScreen() {
         if (Platform.OS === 'web') {
           const returnTo = params.returnTo as string;
           if (returnTo) {
-            router.push(returnTo);
+            router.push(returnTo as any);
           } else {
             router.push('/account');
           }
@@ -281,7 +281,7 @@ export default function EditProfileScreen() {
               editable={false}
               placeholder="Adresse e-mail"
             />
-            <Text style={styles.helperText}>L'e-mail ne peut pas être modifié</Text>
+            <Text style={styles.helperText}>L&apos;e-mail ne peut pas être modifié</Text>
           </View>
         </View>
 

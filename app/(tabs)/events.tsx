@@ -17,6 +17,7 @@ import { getEvents, deleteEvent } from '../../src/services/firebase/events';
 import { Toast } from '../../src/components/Toast';
 import { useToast } from '../../src/hooks/useToast';
 import { getSkillLevelIcon, getSkillLevelColor } from '../../src/utils/skillLevel';
+import { MapView } from '../../src/components/ui/MapView';
 
 export default function EventsScreen() {
   const { userProfile } = useAuth();
@@ -24,6 +25,7 @@ export default function EventsScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   const loadEvents = async () => {
     try {
@@ -164,7 +166,7 @@ export default function EventsScreen() {
       {/* Niveau requis */}
       <View style={styles.skillLevelContainer}>
         <Ionicons 
-          name={getSkillLevelIcon(item.requiredLevel)} 
+          name={getSkillLevelIcon(item.requiredLevel) as any} 
           size={16} 
           color={getSkillLevelColor(item.requiredLevel)} 
         />
@@ -195,37 +197,80 @@ export default function EventsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Événements</Text>
-        <TouchableOpacity 
-          style={styles.addButton}
-          onPress={() => router.push('/event/create' as any)}
-        >
-          <Ionicons name="add" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.mapToggleButton}
+            onPress={() => setShowMap(!showMap)}
+          >
+            <Ionicons 
+              name={showMap ? "list" : "map"} 
+              size={20} 
+              color="#007AFF" 
+            />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.searchButton}
+            onPress={() => router.push('/search' as any)}
+          >
+            <Ionicons name="search" size={20} color="#007AFF" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.addButton}
+            onPress={() => router.push('/event/create' as any)}
+          >
+            <Ionicons name="add" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <FlatList
-        data={events}
-        renderItem={renderEventItem}
-        keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={64} color="#C7C7CC" />
-            <Text style={styles.emptyTitle}>Aucun événement</Text>
-            <Text style={styles.emptySubtitle}>
-              Créez votre premier événement pour commencer !
-            </Text>
-            <TouchableOpacity 
-              style={styles.createFirstButton}
-              onPress={() => router.push('/event/create' as any)}
-            >
-              <Text style={styles.createFirstButtonText}>Créer un événement</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      />
+      {showMap ? (
+        <View style={styles.mapContainer}>
+          <MapView
+            locations={events.map(event => ({
+              latitude: event.location.coordinates?.latitude || 0,
+              longitude: event.location.coordinates?.longitude || 0,
+              address: event.location.address || event.location.name,
+              city: event.location.city,
+            }))}
+            onLocationSelect={(location) => {
+              // Trouver l'événement correspondant
+              const selectedEvent = events.find(event => 
+                event.location.coordinates?.latitude === location.latitude &&
+                event.location.coordinates?.longitude === location.longitude
+              );
+              if (selectedEvent) {
+                router.push(`/event/${selectedEvent.id}` as any);
+              }
+            }}
+            showUserLocation
+            style={styles.map}
+          />
+        </View>
+      ) : (
+        <FlatList
+          data={events}
+          renderItem={renderEventItem}
+          keyExtractor={(item) => item.id}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="calendar-outline" size={64} color="#C7C7CC" />
+              <Text style={styles.emptyTitle}>Aucun événement</Text>
+              <Text style={styles.emptySubtitle}>
+                Créez votre premier événement pour commencer !
+              </Text>
+              <TouchableOpacity 
+                style={styles.createFirstButton}
+                onPress={() => router.push('/event/create' as any)}
+              >
+                <Text style={styles.createFirstButtonText}>Créer un événement</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        />
+      )}
       
       <Toast
         visible={toast.visible}
@@ -280,6 +325,27 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     color: '#000000',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  mapToggleButton: {
+    backgroundColor: '#F2F2F7',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchButton: {
+    backgroundColor: '#F2F2F7',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   addButton: {
     backgroundColor: '#007AFF',
@@ -406,5 +472,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     marginLeft: 4,
+  },
+  mapContainer: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
   },
 });

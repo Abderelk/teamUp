@@ -139,7 +139,7 @@ export default function NotificationsScreen() {
           <View style={styles.infoContainer}>
             <Ionicons name="information-circle-outline" size={20} color="#8E8E93" />
             <Text style={styles.infoText}>
-              Vous pouvez modifier ces parametres a tout moment. Les notifications push necessitent des autorisations d\'appareil.
+              Vous pouvez modifier ces parametres a tout moment. Les notifications push necessitent des autorisations d&apos;appareil.
             </Text>
           </View>
         </View>

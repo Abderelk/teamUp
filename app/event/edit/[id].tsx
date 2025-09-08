@@ -356,7 +356,7 @@ export default function EditEventScreen() {
           </View>
           
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Titre de l'événement *</Text>
+            <Text style={styles.label}>Titre de l&apos;événement *</Text>
             <TextInput
               style={styles.input}
               value={formData.title}
@@ -466,7 +466,7 @@ export default function EditEventScreen() {
           >
             <View style={styles.selectContent}>
               <Ionicons 
-                name={getSkillLevelIcon(formData.requiredLevel)} 
+                name={getSkillLevelIcon(formData.requiredLevel) as any} 
                 size={20} 
                 color={getSkillLevelColor(formData.requiredLevel)} 
                 style={{ marginRight: 8 }}
@@ -746,7 +746,7 @@ export default function EditEventScreen() {
                 >
                   <View style={styles.modalItemContent}>
                     <Ionicons 
-                      name={getSkillLevelIcon(level)} 
+                      name={getSkillLevelIcon(level) as any} 
                       size={20} 
                       color={getSkillLevelColor(level)} 
                       style={{ marginRight: 12 }}

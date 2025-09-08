@@ -138,7 +138,7 @@ export default function AppSettingsScreen() {
             </View>
           </View>
           <Switch
-            value={settings[setting.key]}
+            value={settings[setting.key as keyof AppSettings]}
             onValueChange={() => toggleSetting(setting.key)}
             trackColor={{ false: '#E5E5EA', true: '#007AFF' }}
             thumbColor="#FFFFFF"
@@ -191,7 +191,7 @@ export default function AppSettingsScreen() {
           <View style={styles.infoContainer}>
             <Ionicons name="information-circle-outline" size={20} color="#8E8E93" />
             <Text style={styles.infoText}>
-              Ces paramètres affectent uniquement le comportement de l\'application sur cet appareil. 
+              Ces paramètres affectent uniquement le comportement de l&apos;application sur cet appareil. 
               Vos préférences de compte sont gérées séparément.
             </Text>
           </View>

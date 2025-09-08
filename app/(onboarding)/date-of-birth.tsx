@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Alert, ScrollView , TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { OnboardingLayout } from '../../src/components/onboarding/OnboardingLayout';
 import { OnboardingButton } from '../../src/components/onboarding/OnboardingButton';
 import { useOnboarding } from '../../src/contexts/OnboardingContext';
 import { Colors } from '../../src/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import { TouchableOpacity } from 'react-native';
 
 export default function DateOfBirthScreen() {
   const router = useRouter();

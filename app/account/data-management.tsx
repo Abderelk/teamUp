@@ -41,7 +41,7 @@ export default function DataManagementScreen() {
         where('createdBy', '==', user.uid)
       );
       const eventsSnapshot = await getDocs(eventsQuery);
-      userData.events = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      (userData as any).events = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       // Récupérer les équipes de l'utilisateur
       const teamsQuery = query(
@@ -49,7 +49,7 @@ export default function DataManagementScreen() {
         where('members', 'array-contains', user.uid)
       );
       const teamsSnapshot = await getDocs(teamsQuery);
-      userData.teams = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      (userData as any).teams = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       const dataString = JSON.stringify(userData, null, 2);
       

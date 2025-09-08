@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import { Timestamp } from 'firebase/firestore';
 import { Toast } from '../../src/components/Toast';
 import { useToast } from '../../src/hooks/useToast';
 import { getSkillLevelIcon, getSkillLevelColor } from '../../src/utils/skillLevel';
+import { AddressAutocomplete } from '../../src/components/ui/AddressAutocomplete';
 
 const SPORTS_TRANSLATIONS: Record<string, string> = {
   'football': 'Football',
@@ -51,6 +52,7 @@ export default function CreateEventScreen() {
   const [showSkillModal, setShowSkillModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
   
   const [eventDate, setEventDate] = useState(new Date());
   const [eventTime, setEventTime] = useState(new Date());
@@ -145,7 +147,67 @@ export default function CreateEventScreen() {
     locationName: '',
     locationAddress: '',
     locationCity: '',
+    locationCoordinates: {
+      latitude: 0,
+      longitude: 0,
+    },
   });
+
+  // Display states for mobile text inputs
+  const [displayCity, setDisplayCity] = useState('');
+  const [displayLocationName, setDisplayLocationName] = useState('');
+  const [displayAddress, setDisplayAddress] = useState('');
+
+  // Refs pour forcer la mise à jour des TextInput sur mobile
+  const cityInputRef = useRef<TextInput>(null);
+  const locationNameInputRef = useRef<TextInput>(null);
+  const addressInputRef = useRef<TextInput>(null);
+  
+  // Sync display states with formData
+  useEffect(() => {
+    setDisplayCity(formData.locationCity);
+    setDisplayLocationName(formData.locationName);
+    setDisplayAddress(formData.locationAddress);
+  }, [formData.locationCity, formData.locationName, formData.locationAddress]);
+  
+  // Forcer la mise à jour des TextInput quand les données changent
+  useEffect(() => {
+    if (Platform.OS !== 'web') {
+      cityInputRef.current?.setNativeProps({ text: formData.locationCity });
+      locationNameInputRef.current?.setNativeProps({ text: formData.locationName });
+      addressInputRef.current?.setNativeProps({ text: formData.locationAddress });
+    }
+  }, [formData.locationCity, formData.locationName, formData.locationAddress]);
+
+  // Fonction pour mettre à jour les données de lieu
+  const handlePlaceSelection = useCallback((place: { address: string; coordinates: { latitude: number; longitude: number }; city?: string }) => {
+    console.log('Place selected:', place);
+    const placeName = place.address.split(',')[0]?.trim() || '';
+    
+    // Mise à jour du state
+    const newLocationData = {
+      locationAddress: place.address,
+      locationCity: place.city || '',
+      locationCoordinates: place.coordinates,
+      locationName: placeName
+    };
+    
+    console.log('New location data:', newLocationData);
+    
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        ...newLocationData
+      };
+      console.log('Updated formData:', updated);
+      return updated;
+    });
+    
+    // Force un re-render sur mobile
+    if (Platform.OS !== 'web') {
+      setForceUpdate(prev => prev + 1);
+    }
+  }, []);
 
   const handleCreate = async () => {
     
@@ -177,7 +239,7 @@ export default function CreateEventScreen() {
       return;
     }
     
-    if (!formData.sport || !SPORTS.includes(formData.sport)) {
+    if (!formData.sport || !SPORTS.includes(formData.sport as any)) {
       if (Platform.OS === 'web') {
         window.alert('Erreur: Veuillez sélectionner un sport valide');
       } else {
@@ -288,7 +350,7 @@ export default function CreateEventScreen() {
       const eventData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        sport: formData.sport,
+        sport: formData.sport as any,
         dateTime: Timestamp.fromDate(dateTime),
         duration: parseInt(formData.duration),
         maxParticipants: parseInt(formData.maxParticipants),
@@ -296,13 +358,15 @@ export default function CreateEventScreen() {
         status: 'published' as const,
         organizerId: userProfile.uid,
         organizerName: `${userProfile.firstName} ${userProfile.lastName}`,
+        participants: [],
+        waitingList: [],
         location: {
           name: formData.locationName.trim() || 'Lieu à déterminer',
           address: formData.locationAddress.trim() || '',
           city: formData.locationCity.trim(),
           coordinates: {
-            latitude: 0, // TODO: Géolocalisation
-            longitude: 0
+            latitude: formData.locationCoordinates.latitude,
+            longitude: formData.locationCoordinates.longitude
           }
         },
       };
@@ -521,7 +585,7 @@ export default function CreateEventScreen() {
           >
             <View style={styles.selectContent}>
               <Ionicons 
-                name={getSkillLevelIcon(formData.requiredLevel)} 
+                name={getSkillLevelIcon(formData.requiredLevel) as any} 
                 size={20} 
                 color={getSkillLevelColor(formData.requiredLevel)} 
                 style={{ marginRight: 8 }}
@@ -542,34 +606,79 @@ export default function CreateEventScreen() {
           </View>
           
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Nom du lieu</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.locationName}
-              onChangeText={(text) => setFormData(prev => ({...prev, locationName: text}))}
-              placeholder="Ex: Stade Municipal"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Adresse</Text>
-            <TextInput
-              style={styles.input}
+            <Text style={styles.label}>Rechercher une adresse</Text>
+            <AddressAutocomplete
               value={formData.locationAddress}
-              onChangeText={(text) => setFormData(prev => ({...prev, locationAddress: text}))}
-              placeholder="Ex: 123 Rue du Sport"
+              onPlaceSelect={handlePlaceSelection}
+              placeholder="Ex: Parc de la Villette, Stade de France..."
             />
+            <Text style={styles.helperText}>
+              L'autocomplétion vous aide à trouver l'adresse rapidement
+            </Text>
+          </View>
+
+          <View style={styles.row} key={forceUpdate}>
+            <View style={styles.halfWidth}>
+              <Text style={styles.label}>Ville *</Text>
+              <TextInput
+                ref={cityInputRef}
+                style={styles.input}
+                value={displayCity}
+                onChangeText={(text) => {
+                  setDisplayCity(text);
+                  setFormData(prev => ({...prev, locationCity: text}));
+                }}
+                placeholder="Ex: Paris, Lyon..."
+                placeholderTextColor="#8E8E93"
+                maxLength={100}
+              />
+            </View>
+            
+            <View style={styles.halfWidth}>
+              <Text style={styles.label}>Nom du lieu</Text>
+              <TextInput
+                ref={locationNameInputRef}
+                style={styles.input}
+                value={displayLocationName}
+                onChangeText={(text) => {
+                  setDisplayLocationName(text);
+                  setFormData(prev => ({...prev, locationName: text}));
+                }}
+                placeholder="Ex: Terrain de basket n°2"
+                placeholderTextColor="#8E8E93"
+                maxLength={100}
+              />
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Ville *</Text>
+            <Text style={styles.label}>Adresse complète</Text>
             <TextInput
+              ref={addressInputRef}
               style={styles.input}
-              value={formData.locationCity}
-              onChangeText={(text) => setFormData(prev => ({...prev, locationCity: text}))}
-              placeholder="Ex: Paris"
+              value={displayAddress}
+              onChangeText={(text) => {
+                setDisplayAddress(text);
+                setFormData(prev => ({...prev, locationAddress: text}));
+              }}
+              placeholder="Ex: 15 Avenue de la République, 75011 Paris"
+              placeholderTextColor="#8E8E93"
+              maxLength={200}
             />
+            <Text style={styles.helperText}>
+              Vous pouvez aussi saisir manuellement l'adresse complète
+            </Text>
           </View>
+
+          {formData.locationAddress && (
+            <View style={styles.locationPreview}>
+              <Ionicons name="checkmark-circle" size={20} color="#34C759" />
+              <View style={styles.locationPreviewText}>
+                <Text style={styles.locationAddress}>{formData.locationAddress}</Text>
+                <Text style={styles.locationCity}>{formData.locationCity}</Text>
+              </View>
+            </View>
+          )}
         </View>
         
         {/* Bottom save button */}
@@ -811,7 +920,7 @@ export default function CreateEventScreen() {
                 >
                   <View style={styles.modalItemContent}>
                     <Ionicons 
-                      name={getSkillLevelIcon(level)} 
+                      name={getSkillLevelIcon(level) as any} 
                       size={20} 
                       color={getSkillLevelColor(level)} 
                       style={{ marginRight: 12 }}
@@ -1121,5 +1230,34 @@ const styles = StyleSheet.create({
   modalItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  helperText: {
+    fontSize: 14,
+    color: '#8E8E93',
+    marginTop: 4,
+  },
+  locationPreview: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F0F8FF',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#007AFF20',
+  },
+  locationPreviewText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  locationAddress: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  locationCity: {
+    fontSize: 14,
+    color: '#007AFF',
   },
 });

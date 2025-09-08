@@ -78,12 +78,12 @@ export default function TermsScreen() {
       />
       <ScrollView style={styles.container}>
         <View style={styles.headerSection}>
-          <Text style={styles.title}>Conditions d'utilisation</Text>
+          <Text style={styles.title}>Conditions d&apos;utilisation</Text>
           <Text style={styles.subtitle}>
             Dernière mise à jour : {lastUpdated}
           </Text>
           <Text style={styles.intro}>
-            Bienvenue sur TeamUp. Ces conditions d'utilisation régissent votre utilisation de notre application mobile et de nos services.
+            Bienvenue sur TeamUp. Ces conditions d&apos;utilisation régissent votre utilisation de notre application mobile et de nos services.
           </Text>
         </View>
 

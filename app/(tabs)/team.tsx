@@ -16,7 +16,7 @@ export default function TeamScreen() {
       
       <View style={styles.content}>
         <Text style={styles.description}>
-          Voici votre page d'équipes où vous pouvez gérer et voir vos équipes sportives.
+          Voici votre page d&apos;équipes où vous pouvez gérer et voir vos équipes sportives.
         </Text>
       </View>
     </ScrollView>

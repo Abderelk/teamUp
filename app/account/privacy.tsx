@@ -174,7 +174,7 @@ export default function PrivacyScreen() {
           <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/account/terms')}>
             <View style={styles.actionLeft}>
               <Ionicons name="document-text-outline" size={24} color="#007AFF" />
-              <Text style={styles.actionTitle}>Conditions d'utilisation</Text>
+              <Text style={styles.actionTitle}>Conditions d&apos;utilisation</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>

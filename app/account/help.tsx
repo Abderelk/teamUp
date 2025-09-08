@@ -164,7 +164,7 @@ export default function HelpScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Obtenir de l\'aide</Text>
+          <Text style={styles.sectionTitle}>Obtenir de l&apos;aide</Text>
           
           {supportActions.map((action, index) => (
             <TouchableOpacity

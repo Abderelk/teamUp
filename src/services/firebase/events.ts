@@ -41,7 +41,7 @@ const validateEventData = (data: CreateEvent): CreateEvent => {
   }
   
   // Validation sport
-  if (!data.sport || !SPORTS.includes(data.sport)) {
+  if (!data.sport || !SPORTS.includes(data.sport as any)) {
     throw new Error('Sport invalide');
   }
   

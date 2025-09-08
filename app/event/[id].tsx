@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useCallback } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,6 @@ import { useToast } from '../../src/hooks/useToast';
 import { useAlertHelpers } from '../../src/hooks/useAlert';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../src/services/firebase/config';
-import { useCallback } from 'react';
 
 const { width } = Dimensions.get('window');
 
@@ -275,7 +274,7 @@ export default function EventDetailScreen() {
             
             <View style={styles.infoCard}>
               <Ionicons 
-                name={getSkillLevelIcon(event.requiredLevel)} 
+                name={getSkillLevelIcon(event.requiredLevel) as any} 
                 size={20} 
                 color={getSkillLevelColor(event.requiredLevel)} 
               />

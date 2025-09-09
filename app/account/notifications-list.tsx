@@ -157,6 +157,48 @@ export default function NotificationsListScreen() {
     }
   };
 
+  const handleDeleteAllNotifications = async () => {
+    if (!userProfile?.uid || notifications.length === 0) return;
+
+    const confirmDeleteAll = () => {
+      Alert.alert(
+        'Tout supprimer',
+        `Supprimer toutes les ${notifications.length} notifications ?`,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Tout supprimer',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteAllUserNotifications(userProfile.uid);
+                setNotifications([]);
+                showSuccess('Toutes les notifications supprimées');
+              } catch (error) {
+                console.error('Erreur lors de la suppression:', error);
+                showError('Impossible de supprimer toutes les notifications');
+              }
+            }
+          }
+        ]
+      );
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Supprimer toutes les ${notifications.length} notifications ?`)) {
+        try {
+          await deleteAllUserNotifications(userProfile.uid);
+          setNotifications([]);
+          showSuccess('Toutes les notifications supprimées');
+        } catch (error) {
+          showError('Impossible de supprimer toutes les notifications');
+        }
+      }
+    } else {
+      confirmDeleteAll();
+    }
+  };
+
   const handleCreateTestNotifications = async () => {
     if (!userProfile?.uid) return;
     
@@ -457,6 +499,21 @@ export default function NotificationsListScreen() {
                 <Ionicons name="checkmark-done" size={18} color="#34C759" />
                 <Text style={[styles.optionText, { color: '#34C759' }]}>
                   Marquer tout comme lu
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {notifications.length > 0 && (
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => {
+                  handleDeleteAllNotifications();
+                  setShowOptions(false);
+                }}
+              >
+                <Ionicons name="trash" size={18} color="#FF3B30" />
+                <Text style={[styles.optionText, { color: '#FF3B30' }]}>
+                  Tout supprimer
                 </Text>
               </TouchableOpacity>
             )}

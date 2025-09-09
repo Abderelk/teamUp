@@ -9,6 +9,7 @@ import { useColorScheme } from 'react-native';
 import { useAuth } from '../src/hooks/useAuth';
 import { OnboardingProvider } from '../src/contexts/OnboardingContext';
 import { AlertProvider } from '../src/hooks/useAlert';
+import { useFCMNotifications } from '../src/hooks/useFCMNotifications';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -21,6 +22,9 @@ export default function RootLayout() {
   const router = useRouter();
   const [navigationReady, setNavigationReady] = useState(false);
   const [lastRedirect, setLastRedirect] = useState('');
+  
+  // Initialiser les notifications FCM
+  const { isInitialized } = useFCMNotifications();
 
   useEffect(() => {
     // Attendre que tout soit prêt avant de commencer la navigation

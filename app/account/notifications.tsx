@@ -7,7 +7,8 @@ import {
   Switch, 
   TouchableOpacity, 
   Alert, 
-  ActivityIndicator 
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,10 +16,17 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../src/services/firebase/config';
 import { NotificationPreferences } from '../../src/types';
+import { useFCMNotifications } from '../../src/hooks/useFCMNotifications';
 
 export default function NotificationsScreen() {
   const { userProfile, refreshUserProfile } = useAuth();
   const [loading, setLoading] = useState(false);
+  const { isInitialized, hasToken, sendTestNotification, saveToken, token } = useFCMNotifications();
+  
+  // Log pour debug
+  useEffect(() => {
+    console.log('Notifications Screen Debug:', { isInitialized, hasToken, token });
+  }, [isInitialized, hasToken, token]);
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     events: true,
     teams: true,
@@ -58,6 +66,55 @@ export default function NotificationsScreen() {
       ...prev,
       [key]: !prev[key]
     }));
+  };
+
+  const handleTestNotification = async () => {
+    try {
+      if (Platform.OS === 'web') {
+        Alert.alert('Non supporté', 'Les notifications ne sont pas supportées sur web');
+        return;
+      }
+      
+      await sendTestNotification();
+      Alert.alert('Test envoyé', 'Une notification de test a été envoyée !');
+    } catch (error) {
+      console.error('Erreur test notification:', error);
+      Alert.alert('Erreur', 'Impossible d\'envoyer la notification de test');
+    }
+  };
+
+  const handleRefreshToken = async () => {
+    try {
+      const success = await saveToken();
+      if (success) {
+        Alert.alert('Succès', 'Token de notification actualisé !');
+      } else {
+        Alert.alert('Erreur', 'Impossible d\'actualiser le token');
+      }
+    } catch (error) {
+      Alert.alert('Erreur', 'Une erreur est survenue');
+    }
+  };
+  
+  const handleActivateNotifications = async () => {
+    try {
+      if (Platform.OS === 'web') {
+        Alert.alert('Non supporté', 'Les notifications ne sont pas supportées sur web');
+        return;
+      }
+      
+      const success = await saveToken();
+      if (success) {
+        Alert.alert('Succès', 'Notifications activées avec succès !');
+        // Forcer un refresh de l'état
+        await refreshUserProfile();
+      } else {
+        Alert.alert('Erreur', 'Impossible d\'activer les notifications');
+      }
+    } catch (error) {
+      console.error('Erreur activation notifications:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue lors de l\'activation');
+    }
   };
 
   const notificationOptions = [
@@ -133,6 +190,76 @@ export default function NotificationsScreen() {
               />
             </View>
           ))}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>État des notifications</Text>
+          
+          <View style={styles.statusContainer}>
+            <View style={styles.statusRow}>
+              <Ionicons 
+                name={isInitialized ? "checkmark-circle" : "close-circle"} 
+                size={20} 
+                color={isInitialized ? "#10B981" : "#EF4444"} 
+              />
+              <Text style={styles.statusText}>
+                Service: {isInitialized ? "Initialisé" : "Non initialisé"}
+              </Text>
+            </View>
+            
+            <View style={styles.statusRow}>
+              <Ionicons 
+                name={hasToken ? "checkmark-circle" : "close-circle"} 
+                size={20} 
+                color={hasToken ? "#10B981" : "#EF4444"} 
+              />
+              <Text style={styles.statusText}>
+                Token: {hasToken ? "Disponible" : "Indisponible"}
+              </Text>
+            </View>
+          </View>
+
+          {Platform.OS !== 'web' && (
+            <View style={styles.actionButtons}>
+              {hasToken ? (
+                <>
+                  <TouchableOpacity 
+                    style={styles.testButton}
+                    onPress={handleTestNotification}
+                  >
+                    <Ionicons name="notifications-outline" size={20} color="#FFFFFF" />
+                    <Text style={styles.buttonText}>Tester les notifications</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.refreshButton}
+                    onPress={handleRefreshToken}
+                  >
+                    <Ionicons name="refresh-outline" size={20} color="#007AFF" />
+                    <Text style={styles.refreshButtonText}>Actualiser le token</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <TouchableOpacity 
+                  style={styles.testButton}
+                  onPress={handleActivateNotifications}
+                >
+                  <Ionicons name="key-outline" size={20} color="#FFFFFF" />
+                  <Text style={styles.buttonText}>Activer les notifications</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+          
+          {Platform.OS === 'web' && (
+            <View style={styles.webNotSupportedContainer}>
+              <Ionicons name="information-circle-outline" size={24} color="#FF9500" />
+              <Text style={styles.webNotSupportedText}>
+                Les notifications push ne sont pas supportées sur la version web. 
+                Utilisez l'application mobile pour recevoir des notifications.
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.infoSection}>
@@ -217,6 +344,71 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     marginLeft: 8,
     flex: 1,
+    lineHeight: 20,
+  },
+  statusContainer: {
+    gap: 12,
+    marginBottom: 20,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  statusText: {
+    fontSize: 16,
+    color: '#000000',
+  },
+  actionButtons: {
+    gap: 12,
+  },
+  testButton: {
+    backgroundColor: '#007AFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  refreshButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  refreshButtonText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  webNotSupportedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFF8E1',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFE082',
+    marginTop: 20,
+  },
+  webNotSupportedText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#F57C00',
     lineHeight: 20,
   },
 });

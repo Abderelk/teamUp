@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Text,
-  FlatList,
-  Modal,
-  ActivityIndicator,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Location from 'expo-location';
 import mapboxClient from '@mapbox/mapbox-sdk';
 import geocodingClient from '@mapbox/mapbox-sdk/services/geocoding';
+import * as Location from 'expo-location';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 interface SearchResult {
   id: string;
@@ -39,8 +39,8 @@ const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
 const mapbox = mapboxClient({ accessToken: MAPBOX_ACCESS_TOKEN });
 const geocoding = geocodingClient(mapbox);
 
-export function SearchBar({ 
-  onLocationSelect, 
+export function SearchBar({
+  onLocationSelect,
   placeholder = "Rechercher un lieu...",
   initialValue = ""
 }: SearchBarProps) {
@@ -48,13 +48,13 @@ export function SearchBar({
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState<Location.LocationObject | null>(null);
+  const [, setCurrentLocation] = useState<Location.LocationObject | null>(null);
 
   const getCurrentLocation = async () => {
     try {
       setIsSearching(true);
-      
-      
+
+
       // Demander la permission de géolocalisation
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -76,7 +76,7 @@ export function SearchBar({
         const feature = response.body.features[0];
         const address = feature.place_name;
         const city = feature.context?.find((c: any) => c.id.includes('place'))?.text || '';
-        
+
         setSearchQuery(address);
         onLocationSelect({
           address,
@@ -101,7 +101,7 @@ export function SearchBar({
 
     try {
       setIsSearching(true);
-      
+
       const response = await geocoding.forwardGeocode({
         query,
         limit: 5,
@@ -128,7 +128,7 @@ export function SearchBar({
 
   const handleLocationSelect = (result: SearchResult) => {
     const city = result.place_name.split(',')[1]?.trim() || '';
-    
+
     setSearchQuery(result.place_name);
     setShowResults(false);
     onLocationSelect({
@@ -181,16 +181,16 @@ export function SearchBar({
             </TouchableOpacity>
           )}
         </View>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.locationButton}
           onPress={getCurrentLocation}
           disabled={isSearching}
         >
-          <Ionicons 
-            name="location" 
-            size={20} 
-            color={isSearching ? "#8E8E93" : "#007AFF"} 
+          <Ionicons
+            name="location"
+            size={20}
+            color={isSearching ? "#8E8E93" : "#007AFF"}
           />
         </TouchableOpacity>
       </View>
@@ -201,7 +201,7 @@ export function SearchBar({
         animationType="fade"
         onRequestClose={() => setShowResults(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.modalOverlay}
           onPress={() => setShowResults(false)}
         >

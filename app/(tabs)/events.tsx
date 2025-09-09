@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -10,45 +10,35 @@ import {
   Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useAuth } from '../../src/hooks/useAuth';
-import { Event } from '../../src/types';
-import { getEvents, deleteEvent } from '../../src/services/firebase/events';
+import { deleteEvent } from '../../src/services/firebase/events';
 import { Toast } from '../../src/components/Toast';
 import { useToast } from '../../src/hooks/useToast';
+import { useRealtimeNotifications } from '../../src/hooks/useRealtimeNotifications';
+import { useRealtimeEvents } from '../../src/hooks/useRealtimeEvents';
+import { NotificationBadge } from '../../src/components/ui/NotificationBadge';
 import { getSkillLevelIcon, getSkillLevelColor } from '../../src/utils/skillLevel';
 import { MapView } from '../../src/components/ui/MapView';
 
 export default function EventsScreen() {
   const { userProfile } = useAuth();
   const { toast, showSuccess, hideToast } = useToast();
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { unreadCount, forceRefresh } = useRealtimeNotifications();
+  const { events, loading: eventsLoading } = useRealtimeEvents();
   const [refreshing, setRefreshing] = useState(false);
   const [showMap, setShowMap] = useState(false);
 
-  const loadEvents = async () => {
-    try {
-      // Attendre que l'utilisateur soit chargé
-      if (!userProfile) {
-        setLoading(false);
-        return;
-      }
-      
-      const eventsData = await getEvents();
-      setEvents(eventsData);
-    } catch (error) {
-      console.error('Error loading events:', error);
-      Alert.alert('Erreur', 'Impossible de charger les événements');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadEvents();
-    setRefreshing(false);
+    // Les hooks temps réel se chargent automatiquement de la mise à jour
+    // Mais on peut forcer un refresh si besoin
+    forceRefresh();
+    
+    // Petit délai pour l'animation
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 500);
   };
 
   const handleDeleteEvent = async (eventId: string) => {
@@ -57,7 +47,7 @@ export default function EventsScreen() {
       if (confirmed) {
         try {
           await deleteEvent(eventId);
-          await loadEvents();
+          // Le hook temps réel se chargera de la mise à jour
           showSuccess('Événement supprimé avec succès');
         } catch (error) {
           window.alert('Erreur: Impossible de supprimer l\'événement');
@@ -75,7 +65,7 @@ export default function EventsScreen() {
             onPress: async () => {
               try {
                 await deleteEvent(eventId);
-                await loadEvents();
+                // Le hook temps réel se chargera de la mise à jour
                 showSuccess('Événement supprimé avec succès');
               } catch (error) {
                 Alert.alert('Erreur', 'Impossible de supprimer l\'événement');
@@ -87,22 +77,7 @@ export default function EventsScreen() {
     }
   };
 
-  useEffect(() => {
-    loadEvents();
-  }, []);
-
-  useEffect(() => {
-    if (userProfile) {
-      loadEvents();
-    }
-  }, [userProfile]);
-
-  // Rafraîchir les événements quand on revient sur la page
-  useFocusEffect(
-    useCallback(() => {
-      loadEvents();
-    }, [])
-  );
+  // Plus besoin d'auto-refresh, les hooks temps réel s'en chargent !
 
   const renderEventItem = ({ item }: { item: Event }) => (
     <TouchableOpacity 
@@ -185,7 +160,7 @@ export default function EventsScreen() {
     </TouchableOpacity>
   );
 
-  if (loading) {
+  if (eventsLoading) {
     return (
       <View style={styles.centerContainer}>
         <Text>Chargement des événements...</Text>
@@ -198,6 +173,13 @@ export default function EventsScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Événements</Text>
         <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.notificationButton}
+            onPress={() => router.push('/account/notifications-list' as any)}
+          >
+            <Ionicons name="notifications-outline" size={20} color="#007AFF" />
+            <NotificationBadge count={unreadCount} size="small" />
+          </TouchableOpacity>
           <TouchableOpacity 
             style={styles.mapToggleButton}
             onPress={() => setShowMap(!showMap)}
@@ -213,12 +195,6 @@ export default function EventsScreen() {
             onPress={() => router.push('/search' as any)}
           >
             <Ionicons name="search" size={20} color="#007AFF" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.addButton}
-            onPress={() => router.push('/event/create' as any)}
-          >
-            <Ionicons name="add" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -259,19 +235,21 @@ export default function EventsScreen() {
               <Ionicons name="calendar-outline" size={64} color="#C7C7CC" />
               <Text style={styles.emptyTitle}>Aucun événement</Text>
               <Text style={styles.emptySubtitle}>
-                Créez votre premier événement pour commencer !
+                Utilisez le bouton + pour créer votre premier événement !
               </Text>
-              <TouchableOpacity 
-                style={styles.createFirstButton}
-                onPress={() => router.push('/event/create' as any)}
-              >
-                <Text style={styles.createFirstButtonText}>Créer un événement</Text>
-              </TouchableOpacity>
             </View>
           )}
         />
       )}
       
+      {/* Floating Action Button */}
+      <TouchableOpacity 
+        style={styles.fab}
+        onPress={() => router.push('/event/create' as any)}
+      >
+        <Ionicons name="add" size={28} color="#FFFFFF" />
+      </TouchableOpacity>
+
       <Toast
         visible={toast.visible}
         message={toast.message}
@@ -322,7 +300,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#000000',
   },
@@ -330,6 +308,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  notificationButton: {
+    backgroundColor: '#F2F2F7',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
   },
   mapToggleButton: {
     backgroundColor: '#F2F2F7',
@@ -341,14 +328,6 @@ const styles = StyleSheet.create({
   },
   searchButton: {
     backgroundColor: '#F2F2F7',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addButton: {
-    backgroundColor: '#007AFF',
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -451,17 +430,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
-  createFirstButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  createFirstButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   skillLevelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -478,5 +446,22 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+    zIndex: 1000,
   },
 });

@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './config';
 import { Event, CreateEvent, UpdateEvent, EventFilters, SPORTS, SkillLevel } from '../../types';
+import { createNotification } from './notifications';
 
 const EVENTS_COLLECTION = 'events';
 
@@ -225,6 +226,30 @@ export const updateEvent = async (eventId: string, eventData: Partial<UpdateEven
       ...eventData,
       updatedAt: Timestamp.now(),
     });
+
+    // Créer des notifications pour tous les participants
+    try {
+      if (existingEvent.participants && existingEvent.participants.length > 0) {
+        // Créer une notification pour chaque participant
+        const notificationPromises = existingEvent.participants.map(async (participantId: string) => {
+          await createNotification({
+            userId: participantId,
+            type: 'event_update',
+            title: 'Événement modifié',
+            body: `L'événement "${existingEvent.title}" a été mis à jour`,
+            data: {
+              eventId,
+              eventTitle: existingEvent.title,
+              action: 'updated'
+            }
+          });
+        });
+        
+        await Promise.all(notificationPromises);
+      }
+    } catch (notificationError) {
+      console.error('Erreur lors de l\'envoi des notifications de modification:', notificationError);
+    }
   } catch (error) {
     console.error('Error updating event:', error);
     throw error;
@@ -253,6 +278,29 @@ export const deleteEvent = async (eventId: string): Promise<void> => {
     const existingEvent = eventDoc.data() as Event;
     if (existingEvent.organizerId !== currentUser.uid) {
       throw new Error('Accès non autorisé');
+    }
+
+    // Créer des notifications pour tous les participants avant suppression
+    try {
+      if (existingEvent.participants && existingEvent.participants.length > 0) {
+        const notificationPromises = existingEvent.participants.map(async (participantId: string) => {
+          await createNotification({
+            userId: participantId,
+            type: 'event_cancelled',
+            title: 'Événement annulé',
+            body: `L'événement "${existingEvent.title}" a été annulé par l'organisateur`,
+            data: {
+              eventId,
+              eventTitle: existingEvent.title,
+              action: 'cancelled'
+            }
+          });
+        });
+        
+        await Promise.all(notificationPromises);
+      }
+    } catch (notificationError) {
+      console.error('Erreur lors de l\'envoi des notifications d\'annulation:', notificationError);
     }
     
     await deleteDoc(docRef);
@@ -342,6 +390,27 @@ export const joinEvent = async (eventId: string, userId: string): Promise<void> 
         waitingList: [...waitingList, userId],
         updatedAt: Timestamp.now(),
       });
+
+      // Notification pour l'organisateur
+      try {
+        const userFullName = `${userData.firstName} ${userData.lastName}`;
+        await createNotification({
+          userId: eventData.organizerId,
+          type: 'event_update',
+          title: 'Liste d\'attente',
+          body: `${userFullName} s'est ajouté à la liste d'attente de "${eventData.title}"`,
+          data: {
+            eventId,
+            eventTitle: eventData.title,
+            participantId: userId,
+            participantName: userFullName,
+            action: 'waitlist'
+          }
+        });
+      } catch (notificationError) {
+        console.error('Erreur lors de l\'envoi de la notification:', notificationError);
+      }
+
       throw new Error('Événement complet. Vous avez été ajouté à la liste d\'attente.');
     }
     
@@ -351,6 +420,27 @@ export const joinEvent = async (eventId: string, userId: string): Promise<void> 
       currentParticipants: currentParticipants + 1,
       updatedAt: Timestamp.now(),
     });
+    
+    // Créer une notification pour l'organisateur
+    try {
+      const userFullName = `${userData.firstName} ${userData.lastName}`;
+      await createNotification({
+        userId: eventData.organizerId,
+        type: 'event_invite',
+        title: 'Nouveau participant !',
+        body: `${userFullName} a rejoint votre événement "${eventData.title}"`,
+        data: {
+          eventId,
+          eventTitle: eventData.title,
+          participantId: userId,
+          participantName: userFullName,
+          action: 'join'
+        }
+      });
+    } catch (notificationError) {
+      console.error('Erreur lors de l\'envoi de la notification:', notificationError);
+      // Ne pas faire échouer la participation à cause de la notification
+    }
     
   } catch (error) {
     console.error('Error joining event:', error);
@@ -384,9 +474,10 @@ export const leaveEvent = async (eventId: string, userId: string): Promise<void>
     
     // Si quelqu'un était en liste d'attente, le faire passer en participant
     let newWaitingList = [...waitingList];
+    let promotedParticipant = null;
     if (newWaitingList.length > 0 && newCurrentParticipants < eventData.maxParticipants) {
-      const nextParticipant = newWaitingList[0];
-      newParticipants.push(nextParticipant);
+      promotedParticipant = newWaitingList[0];
+      newParticipants.push(promotedParticipant);
       newWaitingList = newWaitingList.slice(1);
     }
     
@@ -396,6 +487,47 @@ export const leaveEvent = async (eventId: string, userId: string): Promise<void>
       currentParticipants: newParticipants.length,
       updatedAt: Timestamp.now(),
     });
+
+    // Créer des notifications
+    try {
+      // Récupérer les infos de l'utilisateur qui quitte
+      const userRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userRef);
+      const userData = userDoc.data();
+      const userFullName = userData ? `${userData.firstName} ${userData.lastName}` : 'Un participant';
+
+      // Notification pour l'organisateur
+      await createNotification({
+        userId: eventData.organizerId,
+        type: 'event_update',
+        title: 'Participant parti',
+        body: `${userFullName} a quitté votre événement "${eventData.title}"`,
+        data: {
+          eventId,
+          eventTitle: eventData.title,
+          participantId: userId,
+          participantName: userFullName,
+          action: 'leave'
+        }
+      });
+
+      // Si quelqu'un a été promu de la liste d'attente
+      if (promotedParticipant) {
+        await createNotification({
+          userId: promotedParticipant,
+          type: 'event_invite',
+          title: 'Bonne nouvelle !',
+          body: `Une place s'est libérée ! Vous participez maintenant à "${eventData.title}"`,
+          data: {
+            eventId,
+            eventTitle: eventData.title,
+            action: 'promoted'
+          }
+        });
+      }
+    } catch (notificationError) {
+      console.error('Erreur lors de l\'envoi des notifications:', notificationError);
+    }
     
   } catch (error) {
     console.error('Error leaving event:', error);

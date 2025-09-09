@@ -1,8 +1,13 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRealtimeNotifications } from '../../src/hooks/useRealtimeNotifications';
+import { NotificationBadge } from '../../src/components/ui/NotificationBadge';
 
 export default function TabLayout() {
+  const { unreadCount } = useRealtimeNotifications();
+
   return (
     <Tabs
       screenOptions={{
@@ -15,7 +20,10 @@ export default function TabLayout() {
         options={{
           title: 'Événements',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} />
+            <View style={{ position: 'relative' }}>
+              <Ionicons name="calendar" size={size} color={color} />
+              <NotificationBadge count={unreadCount} size="small" />
+            </View>
           ),
         }}
       />

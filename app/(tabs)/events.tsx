@@ -155,16 +155,6 @@ export default function EventsScreen() {
           <Text style={styles.eventSport}>{item.sport}</Text>
         </View>
         <View style={styles.eventActions}>
-          {/* Bouton Chat - visible pour les organisateurs et participants */}
-          {canAccessChat && (
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.chatButton]}
-              onPress={(e) => handleOpenEventChat(item, e)}
-            >
-              <Ionicons name="chatbubbles" size={20} color="#34C759" />
-              <ChatNotificationBadge eventId={item.id} size="small" />
-            </TouchableOpacity>
-          )}
           {item.organizerId === userProfile?.uid && (
             <>
               <TouchableOpacity 
@@ -202,12 +192,7 @@ export default function EventsScreen() {
           </Text>
         </View>
         <View style={styles.infoItem}>
-          <Ionicons 
-            name={getSportIcon(item.sport) as any} 
-            size={16} 
-            color={getSportIconColor(item.sport)} 
-          />
-          <Ionicons name="location-outline" size={14} color="#8E8E93" style={{ marginLeft: 4 }} />
+          <Ionicons name="location-outline" size={16} color="#8E8E93" />
           <Text style={styles.infoText}>{item.location.city}</Text>
         </View>
         <View style={styles.infoItem}>
@@ -218,8 +203,15 @@ export default function EventsScreen() {
         </View>
       </View>
       
-      {/* Niveau requis */}
+      {/* Niveau requis avec icône sport */}
       <View style={styles.skillLevelContainer}>
+        <View style={styles.sportIconContainer}>
+          <Ionicons 
+            name={getSportIcon(item.sport) as any} 
+            size={14} 
+            color={getSportIconColor(item.sport)} 
+          />
+        </View>
         <Ionicons 
           name={getSkillLevelIcon(item.requiredLevel) as any} 
           size={16} 
@@ -232,10 +224,22 @@ export default function EventsScreen() {
       </View>
       
       <View style={styles.eventFooter}>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
+        <View style={styles.footerLeft}>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+            <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
+          </View>
+          <Text style={styles.organizerName}>Par {item.organizerName}</Text>
         </View>
-        <Text style={styles.organizerName}>Par {item.organizerName}</Text>
+        {/* Bouton Chat - visible pour les organisateurs et participants */}
+        {canAccessChat && (
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.chatButton]}
+            onPress={(e) => handleOpenEventChat(item, e)}
+          >
+            <Ionicons name="chatbubbles" size={20} color="#34C759" />
+            <ChatNotificationBadge eventId={item.id} size="small" />
+          </TouchableOpacity>
+        )}
       </View>
     </TouchableOpacity>
     );
@@ -483,6 +487,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  footerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  sportIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F2F2F7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -496,6 +514,7 @@ const styles = StyleSheet.create({
   organizerName: {
     fontSize: 12,
     color: '#8E8E93',
+    marginLeft: 8,
   },
   emptyContainer: {
     alignItems: 'center',

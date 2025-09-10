@@ -24,6 +24,7 @@ import { useAlertHelpers } from '../../src/hooks/useAlert';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../src/services/firebase/config';
 import ChatIntegrationService from '../../src/services/chatIntegrationService';
+import { MapView } from '../../src/components/ui/MapView';
 
 const { width } = Dimensions.get('window');
 
@@ -362,12 +363,7 @@ export default function EventDetailScreen() {
         {/* Lieu */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons 
-              name={getSportIcon(event.sport) as any} 
-              size={24} 
-              color={getSportIconColor(event.sport)} 
-            />
-            <Ionicons name="location" size={20} color="#007AFF" style={{ marginLeft: 8 }} />
+            <Ionicons name="location" size={24} color="#007AFF" />
             <Text style={styles.sectionTitle}>Lieu</Text>
           </View>
           
@@ -379,6 +375,29 @@ export default function EventDetailScreen() {
               <Text style={styles.locationAddress}>{event.location.address}</Text>
             )}
             <Text style={styles.locationCity}>{event.location.city}</Text>
+            
+            {/* Carte si les coordonnées sont disponibles */}
+            {event.location.coordinates?.latitude && event.location.coordinates?.longitude && (
+              <View style={styles.mapContainer}>
+                <MapView
+                  events={[{
+                    id: event.id,
+                    sport: event.sport,
+                    location: event.location,
+                    title: event.title,
+                  }]}
+                  onEventSelect={() => {}}
+                  showUserLocation={false}
+                  style={styles.detailMap}
+                  initialRegion={{
+                    latitude: event.location.coordinates.latitude,
+                    longitude: event.location.coordinates.longitude,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                  }}
+                />
+              </View>
+            )}
           </View>
         </View>
 
@@ -651,6 +670,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#007AFF',
     fontWeight: '500',
+    marginBottom: 16,
+  },
+  mapContainer: {
+    height: 200,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 8,
+  },
+  detailMap: {
+    flex: 1,
   },
   organizerName: {
     fontSize: 16,

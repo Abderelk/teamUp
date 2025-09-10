@@ -4,6 +4,7 @@ import { Chat } from '../../types';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ChatListItemProps {
   chat: Chat;
@@ -18,6 +19,7 @@ export function ChatListItem({
   onPress, 
   onLongPress 
 }: ChatListItemProps) {
+  const { colors } = useTheme();
   const unreadCount = chat.unreadCount?.[currentUserId] || 0;
   
   const formatLastMessageTime = (timestamp: any) => {
@@ -33,12 +35,8 @@ export function ChatListItem({
 
   const getChatIcon = () => {
     switch (chat.type) {
-      case 'team':
-        return 'people';
       case 'event':
         return 'calendar';
-      case 'direct':
-        return 'person';
       default:
         return 'chatbubbles';
     }
@@ -46,12 +44,8 @@ export function ChatListItem({
 
   const getChatTypeLabel = () => {
     switch (chat.type) {
-      case 'team':
-        return 'Équipe';
       case 'event':
         return 'Événement';
-      case 'direct':
-        return 'Direct';
       default:
         return 'Chat';
     }
@@ -80,7 +74,8 @@ export function ChatListItem({
     <TouchableOpacity
       style={[
         styles.container,
-        unreadCount > 0 && styles.unreadContainer
+        { backgroundColor: colors.surface, borderBottomColor: colors.border },
+        unreadCount > 0 && { backgroundColor: colors.background }
       ]}
       onPress={handlePress}
       onLongPress={handleLongPress}
@@ -89,7 +84,7 @@ export function ChatListItem({
       <View style={styles.iconContainer}>
         <View style={[
           styles.iconBackground,
-          { backgroundColor: chat.type === 'team' ? '#34C759' : chat.type === 'event' ? '#FF9500' : '#007AFF' }
+          { backgroundColor: chat.type === 'event' ? '#FF9500' : '#007AFF' }
         ]}>
           <Ionicons 
             name={getChatIcon()} 
@@ -105,19 +100,20 @@ export function ChatListItem({
             <Text 
               style={[
                 styles.chatName,
+                { color: colors.text },
                 unreadCount > 0 && styles.unreadChatName
               ]} 
               numberOfLines={1}
             >
               {chat.name}
             </Text>
-            <Text style={styles.chatType}>
+            <Text style={[styles.chatType, { color: colors.textSecondary }]}>
               {getChatTypeLabel()}
             </Text>
           </View>
           
           {chat.lastMessage && (
-            <Text style={styles.lastMessageTime}>
+            <Text style={[styles.lastMessageTime, { color: colors.textSecondary }]}>
               {formatLastMessageTime(chat.lastMessage.timestamp)}
             </Text>
           )}
@@ -127,7 +123,8 @@ export function ChatListItem({
           <Text 
             style={[
               styles.lastMessage,
-              unreadCount > 0 && styles.unreadLastMessage
+              { color: colors.textSecondary },
+              unreadCount > 0 && { color: colors.text, fontWeight: '500' }
             ]} 
             numberOfLines={2}
           >
@@ -152,12 +149,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
-  },
-  unreadContainer: {
-    backgroundColor: '#FAFAFA',
   },
   iconContainer: {
     marginRight: 12,
@@ -187,7 +179,6 @@ const styles = StyleSheet.create({
   chatName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
     marginBottom: 2,
   },
   unreadChatName: {
@@ -196,12 +187,10 @@ const styles = StyleSheet.create({
   chatType: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#8E8E93',
     textTransform: 'uppercase',
   },
   lastMessageTime: {
     fontSize: 12,
-    color: '#8E8E93',
     textAlign: 'right',
   },
   footerContainer: {
@@ -212,13 +201,8 @@ const styles = StyleSheet.create({
   lastMessage: {
     flex: 1,
     fontSize: 14,
-    color: '#8E8E93',
     lineHeight: 18,
     marginRight: 8,
-  },
-  unreadLastMessage: {
-    color: '#000000',
-    fontWeight: '500',
   },
   unreadBadge: {
     backgroundColor: '#FF3B30',

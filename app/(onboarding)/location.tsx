@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { OnboardingLayout } from '../../src/components/onboarding/OnboardingLayout';
 import { OnboardingButton } from '../../src/components/onboarding/OnboardingButton';
 import { useOnboarding } from '../../src/contexts/OnboardingContext';
 import { Colors } from '../../src/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 
 export default function LocationScreen() {
   const router = useRouter();
   const { data, updateData, setCurrentStep } = useOnboarding();
   const [city, setCity] = useState(data.location?.city || '');
   const [showCitySelector, setShowCitySelector] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   
   // Liste étendue de villes françaises organisées par région
   const cityRegions = {
@@ -50,6 +52,62 @@ export default function LocationScreen() {
     }
   };
 
+  const handleLocationPermission = async () => {
+    setIsLoadingLocation(true);
+    
+    try {
+      // Demander l'autorisation de localisation
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          'Autorisation refusée',
+          'Pour utiliser cette fonctionnalité, veuillez autoriser l\'accès à votre localisation dans les paramètres.',
+          [{ text: 'OK' }]
+        );
+        setIsLoadingLocation(false);
+        return;
+      }
+
+      // Obtenir la localisation actuelle
+      const location = await Location.getCurrentPositionAsync({});
+      
+      // Obtenir l'adresse à partir des coordonnées
+      const [address] = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      if (address && address.city) {
+        setCity(address.city);
+        updateData({
+          location: {
+            city: address.city,
+            coordinates: {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            }
+          }
+        });
+      } else {
+        Alert.alert(
+          'Ville non trouvée',
+          'Impossible de déterminer votre ville actuelle. Veuillez la saisir manuellement.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération de la localisation:', error);
+      Alert.alert(
+        'Erreur',
+        'Une erreur est survenue lors de la récupération de votre localisation. Veuillez saisir votre ville manuellement.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
+
   const handleNext = () => {
     if (!city.trim()) {
       Alert.alert(
@@ -76,6 +134,21 @@ export default function LocationScreen() {
       subtitle="Nous utiliserons cette information pour vous proposer des événements près de chez vous."
     >
       <View style={styles.content}>
+        {/* Bouton rond pour autoriser la localisation */}
+        <TouchableOpacity 
+          style={styles.locationButton} 
+          onPress={handleLocationPermission}
+          disabled={isLoadingLocation}
+        >
+          {isLoadingLocation ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Ionicons name="locate" size={28} color="white" />
+          )}
+        </TouchableOpacity>
+        <Text style={styles.locationButtonText}>
+          Utiliser ma position actuelle
+        </Text>
         {/* Ville sélectionnée */}
         <View style={styles.selectedCityContainer}>
           <TouchableOpacity 
@@ -390,5 +463,27 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 24,
+  },
+  locationButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Colors.light.tint,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  locationButtonText: {
+    fontSize: 14,
+    color: Colors.light.tint,
+    textAlign: 'center',
+    marginBottom: 24,
+    fontWeight: '500',
   },
 });

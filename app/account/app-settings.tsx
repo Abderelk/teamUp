@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,10 +6,13 @@ import {
   ScrollView, 
   Switch, 
   TouchableOpacity, 
-  Alert 
+  Alert,
+  ActionSheetIOS,
+  Platform 
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme, ThemeMode } from '../../src/contexts/ThemeContext';
 
 interface AppSettings {
   darkMode: boolean;
@@ -21,14 +24,21 @@ interface AppSettings {
 }
 
 export default function AppSettingsScreen() {
+  const { themeMode, isDarkMode, setThemeMode, colors } = useTheme();
+  
   const [settings, setSettings] = useState<AppSettings>({
-    darkMode: false,
+    darkMode: isDarkMode,
     autoRefresh: true,
     compactView: false,
     showDistance: true,
     enableVibration: true,
     enableSounds: true,
   });
+
+  // Synchroniser les settings avec le thème actuel
+  useEffect(() => {
+    setSettings(prev => ({ ...prev, darkMode: isDarkMode }));
+  }, [isDarkMode]);
 
   const saveSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
@@ -37,11 +47,108 @@ export default function AppSettingsScreen() {
   };
 
   const toggleSetting = (key: keyof AppSettings) => {
+    if (key === 'darkMode') {
+      // Gérer le thème avec un ActionSheet pour plus d'options
+      handleThemeSelection();
+      return;
+    }
+    
     const newSettings = {
       ...settings,
       [key]: !settings[key]
     };
     saveSettings(newSettings);
+  };
+
+  const handleThemeSelection = () => {
+    console.log('🎨 handleThemeSelection appelé');
+    
+    const options = ['Système', 'Clair', 'Sombre', 'Annuler'];
+    const cancelButtonIndex = 3;
+    
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex,
+          title: 'Choisir le thème',
+          message: 'Sélectionnez votre préférence d\'apparence',
+        },
+        (buttonIndex) => {
+          console.log('🎨 ActionSheet buttonIndex:', buttonIndex);
+          if (buttonIndex !== cancelButtonIndex) {
+            const modes: ThemeMode[] = ['system', 'light', 'dark'];
+            const selectedMode = modes[buttonIndex];
+            console.log('🎨 Mode sélectionné:', selectedMode);
+            setThemeMode(selectedMode);
+          }
+        }
+      );
+    } else if (Platform.OS === 'web') {
+      // Pour Web, utiliser Alert avec plusieurs boutons séquentiels
+      const choice = window.confirm(
+        'Choisir le thème:\n\n' +
+        'OK = Mode Sombre\n' +
+        'Annuler = Plus d\'options'
+      );
+      
+      if (choice) {
+        console.log('🎨 Sombre sélectionné (web)');
+        setThemeMode('dark');
+      } else {
+        const lightChoice = window.confirm(
+          'OK = Mode Clair\n' +
+          'Annuler = Mode Système'
+        );
+        
+        if (lightChoice) {
+          console.log('🎨 Clair sélectionné (web)');
+          setThemeMode('light');
+        } else {
+          console.log('🎨 Système sélectionné (web)');
+          setThemeMode('system');
+        }
+      }
+    } else {
+      // Pour Android, utiliser Alert avec plusieurs boutons
+      Alert.alert(
+        'Choisir le thème',
+        'Sélectionnez votre préférence d\'apparence',
+        [
+          { 
+            text: 'Système', 
+            onPress: () => {
+              console.log('🎨 Système sélectionné');
+              setThemeMode('system');
+            }
+          },
+          { 
+            text: 'Clair', 
+            onPress: () => {
+              console.log('🎨 Clair sélectionné');
+              setThemeMode('light');
+            }
+          },
+          { 
+            text: 'Sombre', 
+            onPress: () => {
+              console.log('🎨 Sombre sélectionné');
+              setThemeMode('dark');
+            }
+          },
+          { text: 'Annuler', style: 'cancel' }
+        ]
+      );
+    }
+  };
+
+  const getThemeDisplayText = () => {
+    switch (themeMode) {
+      case 'system': return 'Automatique (système)';
+      case 'light': return 'Clair';
+      case 'dark': return 'Sombre';
+      default: return 'Automatique (système)';
+    }
   };
 
   const handleResetSettings = () => {
@@ -73,10 +180,10 @@ export default function AppSettingsScreen() {
   const appearanceSettings = [
     {
       key: 'darkMode' as keyof AppSettings,
-      title: 'Mode sombre',
-      description: 'Utiliser un thème sombre pour l\'interface',
-      icon: 'moon-outline',
-      comingSoon: true
+      title: 'Apparence',
+      description: getThemeDisplayText(),
+      icon: isDarkMode ? 'moon' : 'sunny',
+      isThemeSelector: true
     },
     {
       key: 'compactView' as keyof AppSettings,
@@ -118,33 +225,51 @@ export default function AppSettingsScreen() {
   ];
 
   const renderSettingGroup = (title: string, settingsGroup: any[]) => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+    <View style={[styles.section, { backgroundColor: colors.surface }]}>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
       
       {settingsGroup.map((setting) => (
-        <View key={setting.key} style={styles.settingContainer}>
+        <TouchableOpacity 
+          key={setting.key} 
+          style={[
+            styles.settingContainer, 
+            { 
+              backgroundColor: colors.surface,
+              borderBottomColor: colors.border
+            }
+          ]}
+          onPress={() => {
+            console.log('🔘 Clic sur setting:', setting.key, setting.isThemeSelector);
+            return setting.isThemeSelector ? handleThemeSelection() : toggleSetting(setting.key);
+          }}
+          disabled={setting.comingSoon}
+        >
           <View style={styles.settingLeft}>
-            <Ionicons name={setting.icon} size={24} color="#007AFF" />
+            <Ionicons name={setting.icon} size={24} color={colors.accent} />
             <View style={styles.settingText}>
               <View style={styles.settingTitleContainer}>
-                <Text style={styles.settingTitle}>{setting.title}</Text>
+                <Text style={[styles.settingTitle, { color: colors.text }]}>{setting.title}</Text>
                 {setting.comingSoon && (
                   <View style={styles.comingSoonBadge}>
                     <Text style={styles.comingSoonText}>Bientôt</Text>
                   </View>
                 )}
               </View>
-              <Text style={styles.settingDescription}>{setting.description}</Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{setting.description}</Text>
             </View>
           </View>
-          <Switch
-            value={settings[setting.key as keyof AppSettings]}
-            onValueChange={() => toggleSetting(setting.key)}
-            trackColor={{ false: '#E5E5EA', true: '#007AFF' }}
-            thumbColor="#FFFFFF"
-            disabled={setting.comingSoon}
-          />
-        </View>
+          {setting.isThemeSelector ? (
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          ) : (
+            <Switch
+              value={settings[setting.key as keyof AppSettings]}
+              onValueChange={() => toggleSetting(setting.key)}
+              trackColor={{ false: colors.border, true: colors.accent }}
+              thumbColor="#FFFFFF"
+              disabled={setting.comingSoon}
+            />
+          )}
+        </TouchableOpacity>
       ))}
     </View>
   );
@@ -157,40 +282,50 @@ export default function AppSettingsScreen() {
           headerShown: true,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={24} color="#007AFF" />
+              <Ionicons name="arrow-back" size={24} color={colors.accent} />
             </TouchableOpacity>
           ),
+          headerStyle: {
+            backgroundColor: colors.surface,
+          },
+          headerTintColor: colors.text,
         }}
       />
-      <ScrollView style={styles.container}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
         {renderSettingGroup('Apparence', appearanceSettings)}
         {renderSettingGroup('Comportement', behaviorSettings)}
         {renderSettingGroup('Retours haptiques', feedbackSettings)}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Maintenance</Text>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Maintenance</Text>
           
-          <TouchableOpacity style={styles.actionItem} onPress={handleResetSettings}>
+          <TouchableOpacity 
+            style={[styles.actionItem, { borderBottomColor: colors.border }]} 
+            onPress={handleResetSettings}
+          >
             <View style={styles.actionLeft}>
               <Ionicons name="refresh-circle-outline" size={24} color="#FF9500" />
-              <Text style={styles.actionTitle}>Réinitialiser les paramètres</Text>
+              <Text style={[styles.actionTitle, { color: colors.text }]}>Réinitialiser les paramètres</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionItem} onPress={() => Alert.alert('Bientôt disponible', 'Cette fonctionnalité sera disponible prochainement.')}>
+          <TouchableOpacity 
+            style={[styles.actionItem, { borderBottomColor: colors.border }]} 
+            onPress={() => Alert.alert('Bientôt disponible', 'Cette fonctionnalité sera disponible prochainement.')}
+          >
             <View style={styles.actionLeft}>
               <Ionicons name="trash-outline" size={24} color="#FF3B30" />
-              <Text style={styles.actionTitle}>Vider le cache</Text>
+              <Text style={[styles.actionTitle, { color: colors.text }]}>Vider le cache</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.infoSection}>
+        <View style={[styles.infoSection, { backgroundColor: colors.surface }]}>
           <View style={styles.infoContainer}>
-            <Ionicons name="information-circle-outline" size={20} color="#8E8E93" />
-            <Text style={styles.infoText}>
+            <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
               Ces paramètres affectent uniquement le comportement de l&apos;application sur cet appareil. 
               Vos préférences de compte sont gérées séparément.
             </Text>
@@ -224,7 +359,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: 'transparent', // Will be overridden by theme
   },
   settingLeft: {
     flexDirection: 'row',
@@ -267,7 +402,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: 'transparent', // Will be overridden by theme
   },
   actionLeft: {
     flexDirection: 'row',

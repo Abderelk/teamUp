@@ -110,32 +110,12 @@ export const useFCMNotifications = () => {
     }
   };
 
-  /**
-   * Envoie une notification de test
-   */
-  const sendTestNotification = async (): Promise<void> => {
-    try {
-      if (Platform.OS === 'web') {
-        console.log('Notifications non supportées sur web');
-        return;
-      }
-      
-      await fcmService.sendLocalNotification(
-        'Test Notification',
-        'Votre système de notifications fonctionne !',
-        { type: 'test' }
-      );
-    } catch (error) {
-      console.error('Erreur lors de l\'envoi de la notification de test:', error);
-    }
-  };
 
   return {
     isInitialized,
     token,
     saveToken,
     removeToken,
-    sendTestNotification,
     hasToken: !!token,
   };
 };

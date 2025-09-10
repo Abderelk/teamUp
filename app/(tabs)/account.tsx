@@ -2,10 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/hooks/useAuth';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { router, Link } from 'expo-router';
 
 export default function AccountScreen() {
   const { user, userProfile, logout } = useAuth();
+  const { colors, isDarkMode, themeMode } = useTheme();
 
   const handleSignOut = async () => {
     await logout();
@@ -43,12 +45,6 @@ export default function AccountScreen() {
       href: '/account/help'
     },
     {
-      icon: 'chatbubble-ellipses-outline',
-      title: 'Envoyer un feedback',
-      subtitle: 'Partagez vos idées et suggestions',
-      href: '/account/feedback'
-    },
-    {
       icon: 'information-circle-outline',
       title: 'À propos',
       subtitle: 'Version de l\'application et informations',
@@ -59,56 +55,68 @@ export default function AccountScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header Section */}
-      <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <Ionicons name="person" size={60} color="#007AFF" />
+      <View style={[styles.header, { backgroundColor: colors.surface }]}>
+        <View style={[styles.avatarContainer, { backgroundColor: colors.background }]}>
+          <Ionicons name="person" size={60} color={colors.accent} />
         </View>
-        <Text style={styles.userName}>
+        <Text style={[styles.userName, { color: colors.text }]}>
           {userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : (user?.email || 'Utilisateur')}
         </Text>
-        <Text style={styles.userEmail}>{user?.email}</Text>
+        <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email}</Text>
+        
+        {/* Indicateur de thème actuel */}
+        <View style={[styles.themeIndicator, { backgroundColor: colors.background }]}>
+          <Ionicons 
+            name={isDarkMode ? "moon" : "sunny"} 
+            size={16} 
+            color={colors.textSecondary} 
+          />
+          <Text style={[styles.themeText, { color: colors.textSecondary }]}>
+            {themeMode === 'system' ? 'Auto' : themeMode === 'dark' ? 'Sombre' : 'Clair'}
+          </Text>
+        </View>
       </View>
 
       {/* Menu Items */}
-      <View style={styles.menuContainer}>
+      <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
         {menuItems.map((item, index) => {
           if (item.href) {
             return (
               <TouchableOpacity 
                 key={index}
-                style={styles.menuItem}
+                style={[styles.menuItem, { borderBottomColor: colors.border }]}
                 onPress={() => {
                   console.log(`Navigating to: ${item.href}`);
                   router.push(item.href as any);
                 }}
               >
                 <View style={styles.menuItemLeft}>
-                  <Ionicons name={item.icon as any} size={24} color="#007AFF" />
+                  <Ionicons name={item.icon as any} size={24} color={colors.accent} />
                   <View style={styles.menuItemText}>
-                    <Text style={styles.menuItemTitle}>{item.title}</Text>
-                    <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
+                    <Text style={[styles.menuItemTitle, { color: colors.text }]}>{item.title}</Text>
+                    <Text style={[styles.menuItemSubtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
                   </View>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             );
           } else {
             return (
               <TouchableOpacity
                 key={index}
-                style={styles.menuItem}
+                style={[styles.menuItem, { borderBottomColor: colors.border }]}
                 onPress={item.onPress}
               >
                 <View style={styles.menuItemLeft}>
-                  <Ionicons name={item.icon as any} size={24} color="#007AFF" />
+                  <Ionicons name={item.icon as any} size={24} color={colors.accent} />
                   <View style={styles.menuItemText}>
-                    <Text style={styles.menuItemTitle}>{item.title}</Text>
-                    <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
+                    <Text style={[styles.menuItemTitle, { color: colors.text }]}>{item.title}</Text>
+                    <Text style={[styles.menuItemSubtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
                   </View>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             );
           }
@@ -116,7 +124,7 @@ export default function AccountScreen() {
       </View>
 
       {/* Sign Out Button */}
-      <View style={styles.signOutContainer}>
+      <View style={[styles.signOutContainer, { backgroundColor: colors.surface }]}>
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
           <Text style={styles.signOutText}>Se déconnecter</Text>
@@ -142,7 +150,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: 'transparent', // Will use dynamic colors in component
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -157,8 +165,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#8E8E93',
   },
+  themeIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'transparent', // Will use dynamic colors in component
+    borderRadius: 12,
+    gap: 6,
+  },
+  themeText: {
+    fontSize: 12,
+    fontWeight: '500',
+    textTransform: 'capitalize',
+  },
   menuContainer: {
-    backgroundColor: '#FFFFFF',
     marginBottom: 20,
   },
   menuItem: {
@@ -168,7 +190,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
   },
   menuItemLeft: {
     flexDirection: 'row',
@@ -182,15 +203,12 @@ const styles = StyleSheet.create({
   menuItemTitle: {
     fontSize: 17,
     fontWeight: '500',
-    color: '#000000',
     marginBottom: 2,
   },
   menuItemSubtitle: {
     fontSize: 14,
-    color: '#8E8E93',
   },
   signOutContainer: {
-    backgroundColor: '#FFFFFF',
     marginBottom: 40,
   },
   signOutButton: {

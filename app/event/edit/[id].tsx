@@ -21,20 +21,7 @@ import { Timestamp } from 'firebase/firestore';
 import { Toast } from '../../../src/components/Toast';
 import { useToast } from '../../../src/hooks/useToast';
 import { getSkillLevelIcon, getSkillLevelColor } from '../../../src/utils/skillLevel';
-
-const SPORTS_TRANSLATIONS: Record<string, string> = {
-  'football': 'Football',
-  'basketball': 'Basketball',
-  'tennis': 'Tennis',
-  'volleyball': 'Volleyball',
-  'badminton': 'Badminton',
-  'handball': 'Handball',
-  'ping-pong': 'Tennis de table',
-  'running': 'Course à pied',
-  'cycling': 'Cyclisme',
-  'swimming': 'Natation',
-  'other': 'Autre'
-};
+import { translateSport } from '../../../src/utils/sportTranslations';
 
 const SKILL_LEVELS: SkillLevel[] = ['beginner', 'intermediate', 'advanced'];
 const SKILL_TRANSLATIONS: Record<SkillLevel, string> = {
@@ -129,9 +116,11 @@ export default function EditEventScreen() {
       return;
     }
     
+    // Utiliser le format local pour éviter les problèmes de fuseau horaire
+    const dateString = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, '0')}-${selectedDay.toString().padStart(2, '0')}`;
     setFormData(prev => ({
       ...prev,
-      date: selectedDate.toISOString().split('T')[0]
+      date: dateString
     }));
     setShowDatePicker(false);
   };
@@ -387,7 +376,7 @@ export default function EditEventScreen() {
               onPress={() => setShowSportModal(true)}
             >
               <Text style={[styles.selectButtonText, formData.sport && styles.selectedText]}>
-                {formData.sport ? SPORTS_TRANSLATIONS[formData.sport] : 'Sélectionner un sport'}
+                {formData.sport ? translateSport(formData.sport) : 'Sélectionner un sport'}
               </Text>
               <Ionicons name="chevron-down" size={20} color="#8E8E93" />
             </TouchableOpacity>
@@ -713,7 +702,7 @@ export default function EditEventScreen() {
                   }}
                 >
                   <Text style={styles.modalItemText}>
-                    {SPORTS_TRANSLATIONS[sport]}
+                    {translateSport(sport)}
                   </Text>
                   {formData.sport === sport && (
                     <Ionicons name="checkmark" size={20} color="#007AFF" />

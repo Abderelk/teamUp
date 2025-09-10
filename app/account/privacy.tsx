@@ -15,10 +15,12 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../src/services/firebase/config';
 import { UserConsents } from '../../src/types';
+import { useTheme } from '../../src/contexts/ThemeContext';
 
 export default function PrivacyScreen() {
   const { userProfile, refreshUserProfile } = useAuth();
   const [loading, setLoading] = useState(false);
+  const { colors } = useTheme();
   const [consents, setConsents] = useState<UserConsents>({
     geolocation: false,
     analytics: false,
@@ -112,98 +114,102 @@ export default function PrivacyScreen() {
           headerShown: true,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={24} color="#007AFF" />
+              <Ionicons name="arrow-back" size={24} color={colors.accent} />
             </TouchableOpacity>
           ),
+          headerStyle: {
+            backgroundColor: colors.surface,
+          },
+          headerTintColor: colors.text,
           headerRight: () => (
             <TouchableOpacity onPress={handleSave} disabled={loading}>
               {loading ? (
-                <ActivityIndicator size="small" color="#007AFF" />
+                <ActivityIndicator size="small" color={colors.accent} />
               ) : (
-                <Text style={styles.saveButtonText}>Enregistrer</Text>
+                <Text style={[styles.saveButtonText, { color: colors.accent }]}>Enregistrer</Text>
               )}
             </TouchableOpacity>
           ),
         }}
       />
-      <ScrollView style={styles.container}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences de confidentialite</Text>
-          <Text style={styles.sectionSubtitle}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Preferences de confidentialite</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
             Controlez comment vos donnees sont utilisees et partagees
           </Text>
           
           {privacyOptions.map((option) => (
-            <View key={option.key} style={styles.optionContainer}>
+            <View key={option.key} style={[styles.optionContainer, { borderBottomColor: colors.border }]}>
               <View style={styles.optionLeft}>
-                <Ionicons name={option.icon as any} size={24} color="#007AFF" />
+                <Ionicons name={option.icon as any} size={24} color={colors.accent} />
                 <View style={styles.optionText}>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
-                  <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+                  <Text style={[styles.optionTitle, { color: colors.text }]}>{option.title}</Text>
+                  <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>{option.subtitle}</Text>
                 </View>
               </View>
               <Switch
                 value={consents[option.key]}
                 onValueChange={() => toggleConsent(option.key)}
-                trackColor={{ false: '#E5E5EA', true: '#007AFF' }}
+                trackColor={{ false: colors.border, true: colors.accent }}
                 thumbColor="#FFFFFF"
               />
             </View>
           ))}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Donnees et securite</Text>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Donnees et securite</Text>
           
-          <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/account/data-management')}>
+          <TouchableOpacity style={[styles.actionItem, { borderBottomColor: colors.border }]} onPress={() => router.push('/account/data-management')}>
             <View style={styles.actionLeft}>
-              <Ionicons name="download-outline" size={24} color="#007AFF" />
-              <Text style={styles.actionTitle}>Gerer mes donnees</Text>
+              <Ionicons name="download-outline" size={24} color={colors.accent} />
+              <Text style={[styles.actionTitle, { color: colors.text }]}>Gerer mes donnees</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/account/change-password')}>
+          <TouchableOpacity style={[styles.actionItem, { borderBottomColor: colors.border }]} onPress={() => router.push('/account/change-password')}>
             <View style={styles.actionLeft}>
-              <Ionicons name="shield-checkmark-outline" size={24} color="#007AFF" />
-              <Text style={styles.actionTitle}>Changer le mot de passe</Text>
+              <Ionicons name="shield-checkmark-outline" size={24} color={colors.accent} />
+              <Text style={[styles.actionTitle, { color: colors.text }]}>Changer le mot de passe</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/account/terms')}>
+          <TouchableOpacity style={[styles.actionItem, { borderBottomColor: colors.border }]} onPress={() => router.push('/account/terms')}>
             <View style={styles.actionLeft}>
-              <Ionicons name="document-text-outline" size={24} color="#007AFF" />
-              <Text style={styles.actionTitle}>Conditions d&apos;utilisation</Text>
+              <Ionicons name="document-text-outline" size={24} color={colors.accent} />
+              <Text style={[styles.actionTitle, { color: colors.text }]}>Conditions d&apos;utilisation</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/account/privacy-policy')}>
+          <TouchableOpacity style={[styles.actionItem, { borderBottomColor: colors.border }]} onPress={() => router.push('/account/privacy-policy')}>
             <View style={styles.actionLeft}>
-              <Ionicons name="lock-closed-outline" size={24} color="#007AFF" />
-              <Text style={styles.actionTitle}>Politique de confidentialite</Text>
+              <Ionicons name="lock-closed-outline" size={24} color={colors.accent} />
+              <Text style={[styles.actionTitle, { color: colors.text }]}>Politique de confidentialite</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.dangerSection}>
-          <Text style={styles.sectionTitle}>Zone dangereuse</Text>
+        <View style={[styles.dangerSection, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Zone dangereuse</Text>
           
           <TouchableOpacity style={styles.dangerItem} onPress={handleDeleteAccount}>
             <View style={styles.actionLeft}>
               <Ionicons name="trash-outline" size={24} color="#FF3B30" />
-              <Text style={styles.dangerTitle}>Supprimer le compte</Text>
+              <Text style={[styles.dangerTitle, { color: '#FF3B30' }]}>Supprimer le compte</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.infoSection}>
+        <View style={[styles.infoSection, { backgroundColor: colors.surface }]}>
           <View style={styles.infoContainer}>
-            <Ionicons name="information-circle-outline" size={20} color="#8E8E93" />
-            <Text style={styles.infoText}>
+            <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
               Votre confidentialite est importante pour nous. Nous suivons les directives du RGPD et ne partageons jamais vos donnees personnelles sans votre consentement explicite.
             </Text>
           </View>

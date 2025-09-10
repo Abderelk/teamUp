@@ -6,11 +6,13 @@ import { useRealtimeNotifications } from '../../src/hooks/useRealtimeNotificatio
 import { NotificationBadge } from '../../src/components/ui/NotificationBadge';
 import { useRealtimeChat } from '../../src/contexts/ChatContext';
 import { useAuth } from '../../src/hooks/useAuth';
+import { useTheme } from '../../src/contexts/ThemeContext';
 
 export default function TabLayout() {
   const { unreadCount } = useRealtimeNotifications();
   const { chats } = useRealtimeChat();
   const { user } = useAuth();
+  const { colors } = useTheme();
 
   // Calculer le nombre de messages non lus dans les chats
   const chatUnreadCount = chats.reduce((total, chat) => {
@@ -22,8 +24,12 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#8E8E93',
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+        },
       }}>
       <Tabs.Screen
         name="events"
@@ -46,15 +52,6 @@ export default function TabLayout() {
               <Ionicons name="chatbubbles" size={size} color={color} />
               <NotificationBadge count={chatUnreadCount} size="small" />
             </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="team"
-        options={{
-          title: 'Équipes',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people" size={size} color={color} />
           ),
         }}
       />

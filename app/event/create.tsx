@@ -22,20 +22,7 @@ import { Toast } from '../../src/components/Toast';
 import { useToast } from '../../src/hooks/useToast';
 import { getSkillLevelIcon, getSkillLevelColor } from '../../src/utils/skillLevel';
 import { AddressAutocomplete } from '../../src/components/ui/AddressAutocomplete';
-
-const SPORTS_TRANSLATIONS: Record<string, string> = {
-  'football': 'Football',
-  'basketball': 'Basketball',
-  'tennis': 'Tennis',
-  'volleyball': 'Volleyball',
-  'badminton': 'Badminton',
-  'handball': 'Handball',
-  'ping-pong': 'Tennis de table',
-  'running': 'Course à pied',
-  'cycling': 'Cyclisme',
-  'swimming': 'Natation',
-  'other': 'Autre'
-};
+import { translateSport } from '../../src/utils/sportTranslations';
 
 const SKILL_LEVELS: SkillLevel[] = ['beginner', 'intermediate', 'advanced'];
 const SKILL_TRANSLATIONS: Record<SkillLevel, string> = {
@@ -119,9 +106,11 @@ export default function CreateEventScreen() {
     }
     
     setEventDate(selectedDate);
+    // Utiliser le format local pour éviter les problèmes de fuseau horaire
+    const dateString = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, '0')}-${selectedDay.toString().padStart(2, '0')}`;
     setFormData(prev => ({
       ...prev,
-      date: selectedDate.toISOString().split('T')[0]
+      date: dateString
     }));
     setShowDatePicker(false);
   };
@@ -333,9 +322,10 @@ export default function CreateEventScreen() {
 
     setLoading(true);
     try {
-      // Créer l'objet DateTime
-      const dateTimeString = `${formData.date}T${formData.time}:00`;
-      const dateTime = new Date(dateTimeString);
+      // Créer l'objet DateTime en tenant compte du fuseau horaire local
+      const [year, month, day] = formData.date.split('-').map(Number);
+      const [hours, minutes] = formData.time.split(':').map(Number);
+      const dateTime = new Date(year, month - 1, day, hours, minutes);
       
       if (dateTime <= new Date()) {
         if (Platform.OS === 'web') {
@@ -358,7 +348,7 @@ export default function CreateEventScreen() {
         status: 'published' as const,
         organizerId: userProfile.uid,
         organizerName: `${userProfile.firstName} ${userProfile.lastName}`,
-        participants: [],
+        participants: [userProfile.uid], // L'organisateur participe automatiquement
         waitingList: [],
         location: {
           name: formData.locationName.trim() || 'Lieu à déterminer',
@@ -369,16 +359,17 @@ export default function CreateEventScreen() {
             longitude: formData.locationCoordinates.longitude
           }
         },
+        currentParticipants: 1, // L'organisateur compte comme 1 participant
       };
 
       const eventId = await createEvent(eventData);
       
-      // Afficher toast de succès puis naviguer
+      // Afficher toast de succès puis naviguer vers l'événement créé
       showSuccess('Événement créé avec succès !');
       
-      // Délai pour voir le toast avant navigation
+      // Naviguer vers l'événement créé pour permettre de le rejoindre/voir
       setTimeout(() => {
-        router.replace('/(tabs)/events');
+        router.replace(`/event/${eventId}`);
       }, 1000);
     } catch (error: any) {
       console.error('Error creating event:', error);
@@ -472,7 +463,7 @@ export default function CreateEventScreen() {
                     </View>
                   )}
                   <Text style={[styles.selectButtonText, formData.sport && styles.selectedText]}>
-                    {formData.sport ? SPORTS_TRANSLATIONS[formData.sport] : 'Sélectionner un sport'}
+                    {formData.sport ? translateSport(formData.sport) : 'Sélectionner un sport'}
                   </Text>
                 </View>
                 <Ionicons name="chevron-down" size={20} color="#8E8E93" />
@@ -882,7 +873,7 @@ export default function CreateEventScreen() {
                   }}
                 >
                   <Text style={styles.modalItemText}>
-                    {SPORTS_TRANSLATIONS[sport]}
+                    {translateSport(sport)}
                   </Text>
                   {formData.sport === sport && (
                     <Ionicons name="checkmark" size={20} color="#007AFF" />

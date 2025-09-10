@@ -24,7 +24,8 @@ import { useAlertHelpers } from '../../src/hooks/useAlert';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../src/services/firebase/config';
 import ChatIntegrationService from '../../src/services/chatIntegrationService';
-import { MapView } from '../../src/components/ui/MapView';
+
+import { StaticMapView } from '../../src/components/ui/StaticMapView';
 
 const { width } = Dimensions.get('window');
 
@@ -379,22 +380,13 @@ export default function EventDetailScreen() {
             {/* Carte si les coordonnées sont disponibles */}
             {event.location.coordinates?.latitude && event.location.coordinates?.longitude && (
               <View style={styles.mapContainer}>
-                <MapView
-                  events={[{
-                    id: event.id,
-                    sport: event.sport,
-                    location: event.location,
-                    title: event.title,
-                  }]}
-                  onEventSelect={() => {}}
-                  showUserLocation={false}
+                <StaticMapView
+                  latitude={event.location.coordinates.latitude}
+                  longitude={event.location.coordinates.longitude}
+                  title={event.title}
+                  address={event.location.address}
+                  sport={event.sport}
                   style={styles.detailMap}
-                  initialRegion={{
-                    latitude: event.location.coordinates.latitude,
-                    longitude: event.location.coordinates.longitude,
-                    latitudeDelta: 0.01,
-                    longitudeDelta: 0.01,
-                  }}
                 />
               </View>
             )}

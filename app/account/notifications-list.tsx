@@ -24,7 +24,6 @@ import {
 } from '../../src/services/firebase/notifications';
 import { Toast } from '../../src/components/Toast';
 import { useToast } from '../../src/hooks/useToast';
-import { createTestNotifications } from '../../src/utils/createTestNotifications';
 
 const { width } = Dimensions.get('window');
 
@@ -199,18 +198,6 @@ export default function NotificationsListScreen() {
     }
   };
 
-  const handleCreateTestNotifications = async () => {
-    if (!userProfile?.uid) return;
-    
-    try {
-      await createTestNotifications(userProfile.uid);
-      showSuccess('Notifications de test créées !');
-      await loadNotifications();
-    } catch (error) {
-      console.error('Erreur lors de la création des notifications de test:', error);
-      showError('Impossible de créer les notifications de test');
-    }
-  };
 
   const handleNotificationPress = async (notification: Notification) => {
     if (!notification.isRead) {
@@ -422,12 +409,6 @@ export default function NotificationsListScreen() {
             <Text style={styles.emptySubtitle}>
               Vous êtes à jour !
             </Text>
-            <TouchableOpacity 
-              style={styles.testButton}
-              onPress={handleCreateTestNotifications}
-            >
-              <Text style={styles.testButtonText}>Créer des notifications de test</Text>
-            </TouchableOpacity>
           </View>
         )}
       />
@@ -518,18 +499,6 @@ export default function NotificationsListScreen() {
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => {
-                handleCreateTestNotifications();
-                setShowOptions(false);
-              }}
-            >
-              <Ionicons name="flask" size={18} color="#FF9500" />
-              <Text style={[styles.optionText, { color: '#FF9500' }]}>
-                Créer des notifications de test
-              </Text>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>

@@ -19,6 +19,7 @@ import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../src/services/firebase/config';
 import { SPORTS, SkillLevel, DayOfWeek } from '../../src/types/index';
 import { useAlertHelpers } from '../../src/hooks/useAlert';
+import { useTheme } from '../../src/contexts/ThemeContext';
 
 // Traductions des sports
 const SPORTS_TRANSLATIONS: Record<string, string> = {
@@ -53,6 +54,7 @@ export default function EditProfileScreen() {
   const { userProfile, refreshUserProfile } = useAuth();
   const params = useLocalSearchParams();
   const { showSuccess, showError } = useAlertHelpers();
+  const { colors } = useTheme();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -222,29 +224,33 @@ export default function EditProfileScreen() {
           headerShown: true,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={24} color="#007AFF" />
+              <Ionicons name="arrow-back" size={24} color={colors.accent} />
             </TouchableOpacity>
           ),
+          headerStyle: {
+            backgroundColor: colors.surface,
+          },
+          headerTintColor: colors.text,
           headerRight: () => (
             <TouchableOpacity onPress={handleSave} disabled={loading}>
               {loading ? (
-                <ActivityIndicator size="small" color="#007AFF" />
+                <ActivityIndicator size="small" color={colors.accent} />
               ) : (
-                <Text style={styles.saveButtonText}>Enregistrer</Text>
+                <Text style={[styles.saveButtonText, { color: colors.accent }]}>Enregistrer</Text>
               )}
             </TouchableOpacity>
           ),
         }}
       />
-      <ScrollView style={styles.container}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Informations personnelles */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informations personnelles</Text>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Informations personnelles</Text>
           
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Prénom</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Prénom</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
               value={formData.firstName}
               onChangeText={(text) => setFormData(prev => ({...prev, firstName: text}))}
               placeholder="Entrez votre prénom"
@@ -253,9 +259,9 @@ export default function EditProfileScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Nom de famille</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Nom de famille</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
               value={formData.lastName}
               onChangeText={(text) => setFormData(prev => ({...prev, lastName: text}))}
               placeholder="Entrez votre nom de famille"
@@ -264,9 +270,9 @@ export default function EditProfileScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Date de naissance</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Date de naissance</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
               value={formData.dateOfBirth}
               onChangeText={(text) => setFormData(prev => ({...prev, dateOfBirth: text}))}
               placeholder="AAAA-MM-JJ"
@@ -274,21 +280,21 @@ export default function EditProfileScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>E-mail</Text>
+            <Text style={[styles.label, { color: colors.text }]}>E-mail</Text>
             <TextInput
-              style={[styles.input, styles.disabledInput]}
+              style={[styles.input, styles.disabledInput, { backgroundColor: colors.background, color: colors.textSecondary, borderColor: colors.border }]}
               value={formData.email}
               editable={false}
               placeholder="Adresse e-mail"
             />
-            <Text style={styles.helperText}>L&apos;e-mail ne peut pas être modifié</Text>
+            <Text style={[styles.helperText, { color: colors.textSecondary }]}>L&apos;e-mail ne peut pas être modifié</Text>
           </View>
         </View>
 
         {/* Sports préférés */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sports préférés</Text>
-          <Text style={styles.sectionSubtitle}>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Sports préférés</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
             Sélectionnez vos sports favoris et définissez votre niveau
           </Text>
           
@@ -298,14 +304,14 @@ export default function EditProfileScreen() {
         </View>
 
         {/* Préférences de distance */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Préférences de recherche</Text>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Préférences de recherche</Text>
           
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Distance maximale (km)</Text>
-            <View style={styles.distanceContainer}>
+            <Text style={[styles.label, { color: colors.text }]}>Distance maximale (km)</Text>
+            <View style={[styles.distanceContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <TextInput
-                style={styles.distanceInput}
+                style={[styles.distanceInput, { color: colors.text }]}
                 value={formData.maxDistance.toString()}
                 onChangeText={(text) => {
                   const num = parseInt(text) || 1;
@@ -314,9 +320,9 @@ export default function EditProfileScreen() {
                 keyboardType="numeric"
                 placeholder="10"
               />
-              <Text style={styles.distanceUnit}>km</Text>
+              <Text style={[styles.distanceUnit, { color: colors.textSecondary }]}>km</Text>
             </View>
-            <Text style={styles.helperText}>
+            <Text style={[styles.helperText, { color: colors.textSecondary }]}>
               Rayon de recherche pour les événements à proximité
             </Text>
           </View>
@@ -329,16 +335,16 @@ export default function EditProfileScreen() {
           animationType="slide"
         >
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
+            <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>
                   Niveau en {selectedSport ? SPORTS_TRANSLATIONS[selectedSport] : ''}
                 </Text>
                 <TouchableOpacity
                   style={styles.closeButton}
                   onPress={() => setShowSkillModal(false)}
                 >
-                  <Ionicons name="close" size={24} color="#8E8E93" />
+                  <Ionicons name="close" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
               

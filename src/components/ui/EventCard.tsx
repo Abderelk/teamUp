@@ -104,9 +104,9 @@ export function EventCard({ event, onPress, showDistance }: EventCardProps) {
         <View style={styles.infoRow}>
           <View style={styles.infoItem}>
             <Ionicons 
-              name={getSportIcon(event.sport) as any} 
+              name={getSportIcon(event.sport as any) as any} 
               size={16} 
-              color={getSportIconColor(event.sport)} 
+              color={getSportIconColor(event.sport as any)} 
             />
             <Ionicons name="location-outline" size={14} color="#8E8E93" style={{ marginLeft: 4 }} />
             <Text style={styles.infoText} numberOfLines={1}>

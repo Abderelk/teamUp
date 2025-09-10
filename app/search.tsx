@@ -13,11 +13,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SearchBar } from '../src/components/ui/SearchBar';
-import { MapView } from '../src/components/ui/MapView';
+import { MapBoxInteractiveView } from '../src/components/ui/MapBoxInteractiveView';
 import { DateRangePicker } from '../src/components/ui/DateRangePicker';
 import { useSearchEvents, SearchFilters } from '../src/hooks/useSearchEvents';
 import { Event } from '../src/types';
 import { EventCard } from '../src/components/ui/EventCard';
+import { getSportOptionsWithKeys, translateSport } from '../src/utils/sportTranslations';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -97,7 +98,7 @@ export default function SearchScreen() {
   );
 
   const radiusOptions = [5, 10, 25, 50, 100];
-  const sportOptions = ['Football', 'Basketball', 'Tennis', 'Running', 'Cyclisme', 'Natation'];
+  const sportOptions = getSportOptionsWithKeys();
   const skillLevels = [
     { key: 'beginner', label: 'Débutant', color: '#34C759' },
     { key: 'intermediate', label: 'Intermédiaire', color: '#FF9500' },
@@ -108,7 +109,7 @@ export default function SearchScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Recherche d&apos;événements...</Text>
+        <Text style={styles.loadingText}>Recherche d'événements...</Text>
       </View>
     );
   }
@@ -133,17 +134,16 @@ export default function SearchScreen() {
       {showMap ? (
         /* Vue carte */
         <View style={styles.mapContainer}>
-          <MapView
+          <MapBoxInteractiveView
             events={events.map(event => ({
               id: event.id,
-              sport: event.sport,
+              sport: event.sport as string,
               location: event.location,
               title: event.title,
             }))}
             onEventSelect={(event) => {
               router.push(`/event/${event.id}`);
             }}
-            showUserLocation
             style={styles.map}
           />
           
@@ -221,18 +221,18 @@ export default function SearchScreen() {
               >
                 {sportOptions.map(sport => (
                   <TouchableOpacity
-                    key={sport}
+                    key={sport.key}
                     style={[
                       styles.filterOption,
-                      filters.sport === sport && styles.filterOptionActive
+                      filters.sport === sport.key && styles.filterOptionActive
                     ]}
-                    onPress={() => handleSportFilter(sport)}
+                    onPress={() => handleSportFilter(sport.key)}
                   >
                     <Text style={[
                       styles.filterOptionText,
-                      filters.sport === sport && styles.filterOptionTextActive
+                      filters.sport === sport.key && styles.filterOptionTextActive
                     ]}>
-                      {sport}
+                      {sport.label}
                     </Text>
                   </TouchableOpacity>
                 ))}

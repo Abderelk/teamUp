@@ -5,6 +5,7 @@ import Constants from 'expo-constants';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { navigationService } from './navigationService';
+import { configureAndroidNotifications, getAndroidFCMToken, handleAndroidBackgroundNotification } from './androidNotificationService';
 
 // Configuration des notifications
 Notifications.setNotificationHandler({
@@ -24,6 +25,7 @@ export interface FCMToken {
 
 class FCMService {
   private expoPushToken: string | null = null;
+  private nativeFCMToken: string | null = null;
 
   /**
    * Initialise le service FCM et demande les permissions
@@ -42,6 +44,12 @@ class FCMService {
         return null;
       }
 
+      // Configuration spécifique pour Android
+      if (Platform.OS === 'android') {
+        await configureAndroidNotifications();
+        handleAndroidBackgroundNotification();
+      }
+
       // Demander les permissions de notification
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
@@ -56,7 +64,17 @@ class FCMService {
         return null;
       }
 
-      // Obtenir le token Expo Push
+      // Sur Android, essayer d'abord d'obtenir le token FCM natif
+      if (Platform.OS === 'android') {
+        const nativeToken = await getAndroidFCMToken();
+        if (nativeToken) {
+          this.nativeFCMToken = nativeToken;
+          console.log('Token FCM natif obtenu:', nativeToken.substring(0, 20) + '...');
+          return nativeToken;
+        }
+      }
+
+      // Fallback: Obtenir le token Expo Push
       const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
       
       if (!projectId) {
@@ -69,6 +87,7 @@ class FCMService {
       });
 
       this.expoPushToken = token.data;
+      console.log('Token Expo Push obtenu:', token.data.substring(0, 20) + '...');
       return this.expoPushToken;
     } catch (error) {
       console.error('Erreur lors de l\'initialisation FCM:', error);
@@ -80,7 +99,9 @@ class FCMService {
    * Sauvegarde le token FCM pour un utilisateur
    */
   async saveTokenForUser(userId: string): Promise<void> {
-    if (!this.expoPushToken) {
+    const currentToken = this.nativeFCMToken || this.expoPushToken;
+    
+    if (!currentToken) {
       throw new Error('Token FCM non disponible');
     }
 
@@ -88,7 +109,7 @@ class FCMService {
       const userRef = doc(db, 'users', userId);
       
       const fcmToken: FCMToken = {
-        token: this.expoPushToken,
+        token: currentToken,
         platform: Platform.OS as 'ios' | 'android',
         updatedAt: new Date(),
       };

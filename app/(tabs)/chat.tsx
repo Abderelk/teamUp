@@ -5,9 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import ChatList from '../../src/components/chat/ChatList';
 import { useRealtimeChat } from '../../src/contexts/ChatContext';
 import { useAuth } from '../../src/hooks/useAuth';
+import { useTheme } from '../../src/contexts/ThemeContext';
 
 export default function ChatTab() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { chats } = useRealtimeChat();
   const { userProfile } = useAuth();
 
@@ -37,7 +39,7 @@ export default function ChatTab() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen 
         options={{ 
           title: 'Discussions',
@@ -45,11 +47,12 @@ export default function ChatTab() {
           headerTitleStyle: {
             fontWeight: '600',
             fontSize: 18,
+            color: colors.text,
           },
           headerStyle: {
-            backgroundColor: '#FFFFFF',
+            backgroundColor: colors.surface,
           },
-          headerTintColor: '#000000',
+          headerTintColor: colors.text,
           headerRight: () => (
             <TouchableOpacity
               style={styles.headerButton}
@@ -59,7 +62,7 @@ export default function ChatTab() {
               }}
               activeOpacity={0.7}
             >
-              <Ionicons name="add" size={24} color="#007AFF" />
+              <Ionicons name="add" size={24} color={colors.accent} />
             </TouchableOpacity>
           ),
         }} 
@@ -69,7 +72,7 @@ export default function ChatTab() {
 
       {/* Bouton flottant pour créer un nouveau chat */}
       <TouchableOpacity
-        style={styles.floatingButton}
+        style={[styles.floatingButton, { backgroundColor: colors.accent }]}
         onPress={() => {
           console.log('🔘 Bouton flottant pressé');
           handleCreateNewChat();

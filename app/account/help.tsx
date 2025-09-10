@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../src/contexts/ThemeContext';
 
 export default function HelpScreen() {
+  const { colors } = useTheme();
   const handleContactSupport = () => {
     Alert.alert(
       'Contacter le support',
@@ -38,9 +40,6 @@ export default function HelpScreen() {
     Linking.openURL('mailto:bugs@teamup.com?subject=Rapport de bug TeamUp');
   };
 
-  const handleFeedback = () => {
-    Linking.openURL('mailto:feedback@teamup.com?subject=Commentaires TeamUp');
-  };
 
   const helpSections = [
     {
@@ -118,12 +117,6 @@ export default function HelpScreen() {
       subtitle: 'Informez-nous de tout problème que vous avez rencontré',
       onPress: handleReportBug
     },
-    {
-      icon: 'chatbubble-outline',
-      title: 'Envoyer des commentaires',
-      subtitle: 'Partagez vos idées et suggestions',
-      onPress: handleFeedback
-    },
   ];
 
   return (
@@ -134,18 +127,22 @@ export default function HelpScreen() {
           headerShown: true,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={24} color="#007AFF" />
+              <Ionicons name="arrow-back" size={24} color={colors.accent} />
             </TouchableOpacity>
           ),
+          headerStyle: {
+            backgroundColor: colors.surface,
+          },
+          headerTintColor: colors.text,
         }}
       />
-      <ScrollView style={styles.container}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Questions fréquemment posées</Text>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Questions fréquemment posées</Text>
           
           {helpSections.map((section, sectionIndex) => (
             <View key={sectionIndex} style={styles.helpSection}>
-              <Text style={styles.helpSectionTitle}>{section.title}</Text>
+              <Text style={[styles.helpSectionTitle, { color: colors.text }]}>{section.title}</Text>
               {section.items.map((item, itemIndex) => (
                 <TouchableOpacity
                   key={itemIndex}
@@ -153,43 +150,43 @@ export default function HelpScreen() {
                   onPress={item.onPress}
                 >
                   <View style={styles.helpItemLeft}>
-                    <Ionicons name={item.icon as any} size={20} color="#007AFF" />
-                    <Text style={styles.helpItemTitle}>{item.title}</Text>
+                    <Ionicons name={item.icon as any} size={20} color={colors.accent} />
+                    <Text style={[styles.helpItemTitle, { color: colors.text }]}>{item.title}</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={16} color="#C7C7CC" />
+                  <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
               ))}
             </View>
           ))}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Obtenir de l&apos;aide</Text>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Obtenir de l&apos;aide</Text>
           
           {supportActions.map((action, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.supportItem}
+              style={[styles.supportItem, { borderBottomColor: colors.border }]}
               onPress={action.onPress}
             >
               <View style={styles.supportItemLeft}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name={action.icon as any} size={24} color="#007AFF" />
+                <View style={[styles.iconContainer, { backgroundColor: colors.background }]}>
+                  <Ionicons name={action.icon as any} size={24} color={colors.accent} />
                 </View>
                 <View style={styles.supportItemText}>
-                  <Text style={styles.supportItemTitle}>{action.title}</Text>
-                  <Text style={styles.supportItemSubtitle}>{action.subtitle}</Text>
+                  <Text style={[styles.supportItemTitle, { color: colors.text }]}>{action.title}</Text>
+                  <Text style={[styles.supportItemSubtitle, { color: colors.textSecondary }]}>{action.subtitle}</Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           ))}
         </View>
 
-        <View style={styles.infoSection}>
+        <View style={[styles.infoSection, { backgroundColor: colors.surface }]}>
           <View style={styles.infoContainer}>
-            <Ionicons name="information-circle-outline" size={20} color="#8E8E93" />
-            <Text style={styles.infoText}>
+            <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
               Notre équipe de support répond généralement dans les 24 heures. Pour les problèmes urgents, veuillez nous contacter directement.
             </Text>
           </View>

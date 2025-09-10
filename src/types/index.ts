@@ -8,7 +8,7 @@ export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
 export type MessageType = 'text' | 'system' | 'image';
 export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
 export type ChatType = 'event';
-export type NotificationType = 'event_invite' | 'team_invite' | 'event_update' | 'event_cancelled' | 'team_message' | 'chat_message' | 'general';
+export type NotificationType = 'event_invite' | 'event_update' | 'event_cancelled' | 'chat_message' | 'general';
 
 // ===== INTERFACES GÉOLOCALISATION =====
 
@@ -133,35 +133,6 @@ export interface Event {
   updatedAt: Timestamp;
 }
 
-// ===== INTERFACES ÉQUIPES =====
-
-export interface TeamStats {
-  eventsCreated: number;
-  eventsCompleted: number;
-  totalMembers: number;
-}
-
-export interface Team {
-  id: string;
-  name: string;
-  description: string;
-  sport: string;
-  isPrivate: boolean;
-  
-  // Capitaine/Admin
-  captainId: string;
-  adminIds: string[];
-  
-  // Membres
-  memberIds: string[];
-  maxMembers: number;
-  
-  // Statistiques
-  stats: TeamStats;
-  
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
 
 // ===== INTERFACES CHAT ET MESSAGES =====
 
@@ -260,8 +231,7 @@ export interface Venue {
 
 // Type pour les créations (sans ID et timestamps)
 export type CreateUser = Omit<User, 'uid' | 'createdAt' | 'updatedAt' | 'version'>;
-export type CreateEvent = Omit<Event, 'id' | 'createdAt' | 'updatedAt' | 'currentParticipants'>;
-export type CreateTeam = Omit<Team, 'id' | 'createdAt' | 'updatedAt' | 'stats'>;
+export type CreateEvent = Omit<Event, 'id' | 'createdAt' | 'updatedAt'>;
 export type CreateSportProfile = Omit<SportProfile, 'createdAt' | 'updatedAt'>;
 export type CreateMessage = Omit<Message, 'id' | 'timestamp'>;
 export type CreateChatMessage = Omit<ChatMessage, 'id' | 'timestamp' | 'status'>;
@@ -272,7 +242,6 @@ export type CreateVenue = Omit<Venue, 'id'>;
 // Type pour les mises à jour (champs optionnels)
 export type UpdateUser = Partial<Omit<User, 'uid' | 'createdAt'>> & { updatedAt: Timestamp };
 export type UpdateEvent = Partial<Omit<Event, 'id' | 'createdAt'>> & { updatedAt: Timestamp };
-export type UpdateTeam = Partial<Omit<Team, 'id' | 'createdAt'>> & { updatedAt: Timestamp };
 export type UpdateSportProfile = Partial<Omit<SportProfile, 'userId' | 'createdAt'>> & { updatedAt: Timestamp };
 
 // Types pour les filtres et recherches
@@ -286,12 +255,6 @@ export interface EventFilters {
   userCoordinates?: Coordinates;
 }
 
-export interface TeamFilters {
-  sport?: string;
-  city?: string;
-  isPrivate?: boolean;
-  hasSpots?: boolean; // Équipes qui ont encore de la place
-}
 
 export interface UserSearchFilters {
   city?: string;
@@ -332,12 +295,6 @@ export interface UseEventsState {
   hasMore: boolean;
 }
 
-export interface UseTeamsState {
-  teams: Team[];
-  loading: boolean;
-  error: string | null;
-  hasMore: boolean;
-}
 
 // ===== CONSTANTES =====
 
@@ -362,5 +319,5 @@ export const DAYS_OF_WEEK: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thu
 export const EVENT_STATUSES: EventStatus[] = ['draft', 'published', 'cancelled', 'completed'];
 export const MESSAGE_TYPES: MessageType[] = ['text', 'system', 'image'];
 export const MESSAGE_STATUSES: MessageStatus[] = ['sending', 'sent', 'delivered', 'read', 'failed'];
-export const CHAT_TYPES: ChatType[] = ['team', 'event', 'direct'];
-export const NOTIFICATION_TYPES: NotificationType[] = ['event_invite', 'team_invite', 'event_update', 'event_cancelled', 'team_message', 'chat_message', 'general'];
+export const CHAT_TYPES: ChatType[] = ['event'];
+export const NOTIFICATION_TYPES: NotificationType[] = ['event_invite', 'event_update', 'event_cancelled', 'chat_message', 'general'];

@@ -32,8 +32,10 @@
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
-        "RECORD_AUDIO"
-      ]
+        "RECORD_AUDIO",
+        "POST_NOTIFICATIONS"
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -64,7 +66,8 @@
         {
           "icon": "./assets/images/notification-icon.png",
           "color": "#007AFF",
-          "defaultChannel": "teamup-notifications"
+          "defaultChannel": "teamup-notifications",
+          "sounds": []
         }
       ]
     ],

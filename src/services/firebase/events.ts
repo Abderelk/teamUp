@@ -128,9 +128,6 @@ export const createEvent = async (eventData: CreateEvent): Promise<string> => {
       ...validatedData,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
-      currentParticipants: 0,
-      participants: [],
-      waitingList: [],
     });
     
     return docRef.id;

@@ -11,13 +11,13 @@ export default function NotFoundScreen() {
         <Ionicons name="help-circle-outline" size={100} color="#8E8E93" />
         <Text style={styles.title}>Page introuvable</Text>
         <Text style={styles.message}>
-          Désolé, la page que vous recherchez n&apos;existe pas.
+          Désolé, la page que vous recherchez n'existe pas.
         </Text>
         <TouchableOpacity 
           style={styles.button}
           onPress={() => router.replace('/(tabs)/events')}
         >
-          <Text style={styles.buttonText}>Retour à l&apos;accueil</Text>
+          <Text style={styles.buttonText}>Retour à l'accueil</Text>
         </TouchableOpacity>
       </View>
     </>

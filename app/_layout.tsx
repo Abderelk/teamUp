@@ -14,6 +14,7 @@ import { ChatProvider } from '../src/contexts/ChatContext';
 import { NotificationProvider as InAppNotificationProvider, useNotification } from '../src/contexts/NotificationContext';
 import InAppNotification from '../src/components/notifications/InAppNotification';
 import { navigationService } from '../src/services/navigationService';
+import { ThemeProvider as TeamUpThemeProvider } from '../src/contexts/ThemeContext';
 
 function NotificationOverlay() {
   const { currentNotification, hideNotification } = useNotification();
@@ -126,27 +127,29 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AlertProvider>
-        <OnboardingProvider>
-          <InAppNotificationProvider>
-            <ChatProvider>
-              <NotificationOverlay />
-              <Stack>
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-                <Stack.Screen name="account" options={{ headerShown: false }} />
-                <Stack.Screen name="event" options={{ headerShown: false }} />
-                <Stack.Screen name="search" options={{ headerShown: false }} />
-                <Stack.Screen name="chat" options={{ headerShown: false }} />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-              <StatusBar style="auto" />
-            </ChatProvider>
-          </InAppNotificationProvider>
-        </OnboardingProvider>
-      </AlertProvider>
-    </ThemeProvider>
+    <TeamUpThemeProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <AlertProvider>
+          <OnboardingProvider>
+            <InAppNotificationProvider>
+              <ChatProvider>
+                <NotificationOverlay />
+                <Stack>
+                  <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+                  <Stack.Screen name="account" options={{ headerShown: false }} />
+                  <Stack.Screen name="event" options={{ headerShown: false }} />
+                  <Stack.Screen name="search" options={{ headerShown: false }} />
+                  <Stack.Screen name="chat" options={{ headerShown: false }} />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+                <StatusBar style="auto" />
+              </ChatProvider>
+            </InAppNotificationProvider>
+          </OnboardingProvider>
+        </AlertProvider>
+      </ThemeProvider>
+    </TeamUpThemeProvider>
   );
 }

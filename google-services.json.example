@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "VOTRE_PROJECT_NUMBER",
+    "project_id": "VOTRE_PROJECT_ID",
+    "storage_bucket": "VOTRE_PROJECT_ID.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "VOTRE_MOBILESDK_APP_ID",
+        "android_client_info": {
+          "package_name": "com.teamup.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "VOTRE_CLIENT_ID",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "VOTRE_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "VOTRE_WEB_CLIENT_ID",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

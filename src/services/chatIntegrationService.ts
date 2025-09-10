@@ -107,102 +107,14 @@ export class ChatIntegrationService {
     }
   }
 
-  // ===== INTÉGRATION AVEC LES ÉQUIPES =====
-
-  /**
-   * Créer un chat pour une équipe lors de sa création
-   */
-  async createTeamChatOnTeamCreation(
-    teamId: string,
-    teamName: string,
-    captainId: string,
-    members: string[] = []
-  ): Promise<string | null> {
-    try {
-      // Inclure le capitaine dans les membres s'il n'y est pas déjà
-      const allMembers = [captainId, ...members.filter(m => m !== captainId)];
-      
-      const chatId = await ChatService.createTeamChat(
-        teamId,
-        teamName,
-        captainId,
-        allMembers
-      );
-      
-      console.log(`✅ Chat d'équipe créé automatiquement: ${chatId} pour l'équipe ${teamId}`);
-      return chatId;
-    } catch (error) {
-      console.error('❌ Erreur lors de la création automatique du chat d\'équipe:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Ajouter un membre au chat d'équipe quand il rejoint l'équipe
-   */
-  async addMemberToTeamChat(
-    teamId: string,
-    userId: string,
-    userName: string
-  ): Promise<void> {
-    try {
-      const teamChat = await ChatService.getTeamChat(teamId);
-      
-      if (teamChat) {
-        // Vérifier si l'utilisateur n'est pas déjà dans le chat
-        if (!teamChat.participantIds.includes(userId)) {
-          await ChatService.addUserToChat(teamChat.id, userId, userName);
-          console.log(`✅ Membre ${userName} ajouté au chat de l'équipe ${teamId}`);
-        }
-      }
-    } catch (error) {
-      console.error('❌ Erreur lors de l\'ajout du membre au chat d\'équipe:', error);
-    }
-  }
-
-  /**
-   * Obtenir ou créer le chat d'une équipe
-   */
-  async getOrCreateTeamChat(
-    teamId: string,
-    teamName: string,
-    captainId: string,
-    members: string[] = []
-  ): Promise<string | null> {
-    try {
-      // Vérifier si un chat existe déjà pour cette équipe
-      let teamChat = await ChatService.getTeamChat(teamId);
-      
-      if (!teamChat) {
-        // Créer le chat s'il n'existe pas
-        const chatId = await this.createTeamChatOnTeamCreation(
-          teamId,
-          teamName,
-          captainId,
-          members
-        );
-        return chatId;
-      }
-      
-      return teamChat.id;
-    } catch (error) {
-      console.error('❌ Erreur lors de la récupération/création du chat d\'équipe:', error);
-      return null;
-    }
-  }
-
   // ===== UTILITAIRES =====
 
   /**
-   * Obtenir le chat associé à un événement ou une équipe
+   * Obtenir le chat associé à un événement
    */
-  async getAssociatedChat(type: 'event' | 'team', entityId: string): Promise<Chat | null> {
+  async getAssociatedChat(type: 'event', entityId: string): Promise<Chat | null> {
     try {
-      if (type === 'event') {
-        return await ChatService.getEventChat(entityId);
-      } else {
-        return await ChatService.getTeamChat(entityId);
-      }
+      return await ChatService.getEventChat(entityId);
     } catch (error) {
       console.error(`❌ Erreur lors de la récupération du chat associé (${type}:${entityId}):`, error);
       return null;

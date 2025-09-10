@@ -18,12 +18,14 @@ import { db } from '../../src/services/firebase/config';
 import { NotificationPreferences } from '../../src/types';
 import { useFCMNotifications } from '../../src/hooks/useFCMNotifications';
 import { useNotification } from '../../src/contexts/NotificationContext';
+import { useTheme } from '../../src/contexts/ThemeContext';
 
 export default function NotificationsScreen() {
   const { userProfile, refreshUserProfile } = useAuth();
   const [loading, setLoading] = useState(false);
-  const { isInitialized, hasToken, sendTestNotification, saveToken, token } = useFCMNotifications();
+  const { isInitialized, hasToken, saveToken, token } = useFCMNotifications();
   const { showNotification } = useNotification();
+  const { colors } = useTheme();
   
   // Log pour debug
   useEffect(() => {
@@ -70,20 +72,6 @@ export default function NotificationsScreen() {
     }));
   };
 
-  const handleTestNotification = async () => {
-    try {
-      if (Platform.OS === 'web') {
-        Alert.alert('Non supporté', 'Les notifications ne sont pas supportées sur web');
-        return;
-      }
-      
-      await sendTestNotification();
-      Alert.alert('Test envoyé', 'Une notification de test a été envoyée !');
-    } catch (error) {
-      console.error('Erreur test notification:', error);
-      Alert.alert('Erreur', 'Impossible d\'envoyer la notification de test');
-    }
-  };
 
   const handleRefreshToken = async () => {
     try {
@@ -154,48 +142,52 @@ export default function NotificationsScreen() {
           headerShown: true,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={24} color="#007AFF" />
+              <Ionicons name="arrow-back" size={24} color={colors.accent} />
             </TouchableOpacity>
           ),
+          headerStyle: {
+            backgroundColor: colors.surface,
+          },
+          headerTintColor: colors.text,
           headerRight: () => (
             <TouchableOpacity onPress={handleSave} disabled={loading}>
               {loading ? (
-                <ActivityIndicator size="small" color="#007AFF" />
+                <ActivityIndicator size="small" color={colors.accent} />
               ) : (
-                <Text style={styles.saveButtonText}>Enregistrer</Text>
+                <Text style={[styles.saveButtonText, { color: colors.accent }]}>Enregistrer</Text>
               )}
             </TouchableOpacity>
           ),
         }}
       />
-      <ScrollView style={styles.container}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences de notification</Text>
-          <Text style={styles.sectionSubtitle}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Preferences de notification</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
             Choisissez les notifications que vous souhaitez recevoir
           </Text>
           
           {notificationOptions.map((option) => (
-            <View key={option.key} style={styles.optionContainer}>
+            <View key={option.key} style={[styles.optionContainer, { borderBottomColor: colors.border }]}>
               <View style={styles.optionLeft}>
-                <Ionicons name={option.icon as any} size={24} color="#007AFF" />
+                <Ionicons name={option.icon as any} size={24} color={colors.accent} />
                 <View style={styles.optionText}>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
-                  <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+                  <Text style={[styles.optionTitle, { color: colors.text }]}>{option.title}</Text>
+                  <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>{option.subtitle}</Text>
                 </View>
               </View>
               <Switch
                 value={preferences[option.key]}
                 onValueChange={() => togglePreference(option.key)}
-                trackColor={{ false: '#E5E5EA', true: '#007AFF' }}
+                trackColor={{ false: colors.border, true: colors.accent }}
                 thumbColor="#FFFFFF"
               />
             </View>
           ))}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>État des notifications</Text>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>État des notifications</Text>
           
           <View style={styles.statusContainer}>
             <View style={styles.statusRow}>
@@ -204,7 +196,7 @@ export default function NotificationsScreen() {
                 size={20} 
                 color={isInitialized ? "#10B981" : "#EF4444"} 
               />
-              <Text style={styles.statusText}>
+              <Text style={[styles.statusText, { color: colors.text }]}>
                 Service: {isInitialized ? "Initialisé" : "Non initialisé"}
               </Text>
             </View>
@@ -215,7 +207,7 @@ export default function NotificationsScreen() {
                 size={20} 
                 color={hasToken ? "#10B981" : "#EF4444"} 
               />
-              <Text style={styles.statusText}>
+              <Text style={[styles.statusText, { color: colors.text }]}>
                 Token: {hasToken ? "Disponible" : "Indisponible"}
               </Text>
             </View>
@@ -224,56 +216,27 @@ export default function NotificationsScreen() {
           {Platform.OS !== 'web' && (
             <View style={styles.actionButtons}>
               {hasToken ? (
-                <>
-                  <TouchableOpacity 
-                    style={styles.testButton}
-                    onPress={handleTestNotification}
-                  >
-                    <Ionicons name="notifications-outline" size={20} color="#FFFFFF" />
-                    <Text style={styles.buttonText}>Tester les notifications</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.refreshButton}
-                    onPress={handleRefreshToken}
-                  >
-                    <Ionicons name="refresh-outline" size={20} color="#007AFF" />
-                    <Text style={styles.refreshButtonText}>Actualiser le token</Text>
-                  </TouchableOpacity>
-                </>
+                <TouchableOpacity 
+                  style={[styles.refreshButton, { backgroundColor: colors.surface, borderColor: colors.accent }]}
+                  onPress={handleRefreshToken}
+                >
+                  <Ionicons name="refresh-outline" size={20} color={colors.accent} />
+                  <Text style={[styles.refreshButtonText, { color: colors.accent }]}>Actualiser le token</Text>
+                </TouchableOpacity>
               ) : (
                 <TouchableOpacity 
-                  style={styles.testButton}
+                  style={[styles.testButton, { backgroundColor: colors.accent }]}
                   onPress={handleActivateNotifications}
                 >
                   <Ionicons name="key-outline" size={20} color="#FFFFFF" />
-                  <Text style={styles.buttonText}>Activer les notifications</Text>
+                  <Text style={[styles.buttonText]}>Activer les notifications</Text>
                 </TouchableOpacity>
               )}
             </View>
           )}
           
-          <View style={styles.testSection}>
-            <Text style={styles.sectionTitle}>Test des notifications</Text>
-            
-            <TouchableOpacity 
-              style={styles.testButton}
-              onPress={() => {
-                showNotification({
-                  title: '💬 Nouveau message',
-                  message: 'Ceci est une notification de test pour les messages d\'événements',
-                  type: 'chat',
-                  duration: 4000,
-                });
-              }}
-            >
-              <Ionicons name="chatbubble-outline" size={20} color="#FFFFFF" />
-              <Text style={styles.buttonText}>Test notification événement</Text>
-            </TouchableOpacity>
-          </View>
-
           {Platform.OS === 'web' && (
-            <View style={styles.webNotSupportedContainer}>
+            <View style={[styles.webNotSupportedContainer, { backgroundColor: colors.surface }]}>
               <Ionicons name="information-circle-outline" size={24} color="#FF9500" />
               <Text style={styles.webNotSupportedText}>
                 Les notifications push ne sont pas supportées sur la version web. 
@@ -283,10 +246,10 @@ export default function NotificationsScreen() {
           )}
         </View>
 
-        <View style={styles.infoSection}>
+        <View style={[styles.infoSection, { backgroundColor: colors.surface }]}>
           <View style={styles.infoContainer}>
-            <Ionicons name="information-circle-outline" size={20} color="#8E8E93" />
-            <Text style={styles.infoText}>
+            <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
               Vous pouvez modifier ces parametres a tout moment. Les notifications push necessitent des autorisations d&apos;appareil.
             </Text>
           </View>

@@ -12,6 +12,7 @@ import { Chat } from '../../types';
 import ChatListItem from './ChatListItem';
 import { useRealtimeChat } from '../../contexts/ChatContext';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ChatListProps {
   onChatSelect: (chatId: string) => void;
@@ -19,6 +20,7 @@ interface ChatListProps {
 
 export function ChatList({ onChatSelect }: ChatListProps) {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const { chats, loading, error, refreshChats } = useRealtimeChat();
   
   // Déduplication supplémentaire côté composant pour éviter les doublons d'affichage
@@ -33,7 +35,7 @@ export function ChatList({ onChatSelect }: ChatListProps) {
 
   const handleChatLongPress = (chat: Chat) => {
     const isOwner = chat.createdBy === user?.uid;
-    const isAdmin = chat.type === 'team'; // TODO: Vérifier si l'utilisateur est admin de l'équipe
+    const isAdmin = false; // Pas d'équipes dans cette version
     
     const options = ['Détails du chat'];
     
@@ -49,7 +51,7 @@ export function ChatList({ onChatSelect }: ChatListProps) {
 
     Alert.alert(
       chat.name,
-      `Type: ${chat.type === 'team' ? 'Équipe' : chat.type === 'event' ? 'Événement' : 'Direct'}\n${chat.participantIds.length} participant(s)`,
+      `Type: ${chat.type === 'event' ? 'Événement' : 'Chat'}\n${chat.participantIds.length} participant(s)`,
       [
         {
           text: 'Détails du chat',
@@ -126,8 +128,8 @@ export function ChatList({ onChatSelect }: ChatListProps) {
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyTitle}>💬 Aucun chat</Text>
-      <Text style={styles.emptyMessage}>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>💬 Aucun chat</Text>
+      <Text style={[styles.emptyMessage, { color: colors.textSecondary }]}>
         Vos conversations apparaîtront ici.{'\n'}
         Rejoignez une équipe ou un événement pour commencer à discuter !
       </Text>
@@ -137,20 +139,20 @@ export function ChatList({ onChatSelect }: ChatListProps) {
   const renderError = () => (
     <View style={styles.errorContainer}>
       <Text style={styles.errorTitle}>😕 Une erreur est survenue</Text>
-      <Text style={styles.errorMessage}>{error}</Text>
+      <Text style={[styles.errorMessage, { color: colors.textSecondary }]}>{error}</Text>
     </View>
   );
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         {renderError()}
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={uniqueChats}
         renderItem={renderChatItem}
@@ -162,12 +164,12 @@ export function ChatList({ onChatSelect }: ChatListProps) {
           <RefreshControl
             refreshing={loading}
             onRefresh={refreshChats}
-            colors={['#007AFF']}
-            tintColor="#007AFF"
+            colors={[colors.accent]}
+            tintColor={colors.accent}
           />
         }
         ListEmptyComponent={!loading && uniqueChats.length === 0 ? renderEmpty : null}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.border }]} />}
       />
     </SafeAreaView>
   );

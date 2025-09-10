@@ -7,26 +7,31 @@ import {
   Platform,
   Alert,
   KeyboardAvoidingView,
-  Animated
+  Animated,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { selectAndUploadImage } from '../../services/imageService';
 
 interface ChatInputProps {
   onSendMessage: (content: string) => Promise<void>;
-  onSendImage?: () => void;
+  onSendImage?: (imageUrl: string, caption?: string) => Promise<void>;
   placeholder?: string;
   disabled?: boolean;
+  chatId?: string;
 }
 
 export function ChatInput({ 
   onSendMessage, 
   onSendImage,
   placeholder = "Tapez votre message...",
-  disabled = false 
+  disabled = false,
+  chatId 
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
   const handleSendMessage = async () => {
@@ -56,15 +61,44 @@ export function ChatInput({
     }
   };
 
-  const handleImagePress = () => {
-    if (onSendImage) {
-      onSendImage();
-    } else {
+  const handleImagePress = async () => {
+    if (!chatId || !onSendImage || isUploadingImage || disabled) {
       Alert.alert(
         'Bientôt disponible',
         'L\'envoi d\'images sera bientôt disponible !',
         [{ text: 'OK' }]
       );
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+      
+      // Sélectionner et uploader l'image
+      const result = await selectAndUploadImage(`chats/${chatId}/images`, {
+        maxWidth: 1080,
+        maxHeight: 1080,
+        quality: 0.8
+      });
+
+      if (result) {
+        // Envoyer le message avec l'image
+        await onSendImage(result.url);
+        
+        // Feedback haptique sur iOS
+        if (Platform.OS === 'ios') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi de l\'image:', error);
+      Alert.alert(
+        'Erreur',
+        'Impossible d\'envoyer l\'image. Veuillez réessayer.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -76,15 +110,22 @@ export function ChatInput({
     >
       <View style={styles.inputContainer}>
         <TouchableOpacity
-          style={styles.imageButton}
+          style={[
+            styles.imageButton,
+            isUploadingImage && styles.imageButtonLoading
+          ]}
           onPress={handleImagePress}
-          disabled={disabled}
+          disabled={disabled || isUploadingImage}
         >
-          <Ionicons 
-            name="camera" 
-            size={24} 
-            color={disabled ? '#C7C7CC' : '#007AFF'} 
-          />
+          {isUploadingImage ? (
+            <ActivityIndicator size="small" color="#007AFF" />
+          ) : (
+            <Ionicons 
+              name="camera" 
+              size={24} 
+              color={disabled ? '#C7C7CC' : '#007AFF'} 
+            />
+          )}
         </TouchableOpacity>
 
         <TextInput
@@ -112,7 +153,7 @@ export function ChatInput({
             (!message.trim() || isSending || disabled) && styles.sendButtonDisabled
           ]}
           onPress={handleSendMessage}
-          disabled={!message.trim() || isSending || disabled}
+          disabled={!message.trim() || isSending || disabled || isUploadingImage}
           activeOpacity={0.7}
         >
           <Ionicons 
@@ -148,6 +189,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+  },
+  imageButtonLoading: {
+    backgroundColor: '#E3F2FD',
   },
   textInput: {
     flex: 1,

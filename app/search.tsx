@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SearchBar } from '../src/components/ui/SearchBar';
 import { MapView } from '../src/components/ui/MapView';
+import { DateRangePicker } from '../src/components/ui/DateRangePicker';
 import { useSearchEvents, SearchFilters } from '../src/hooks/useSearchEvents';
 import { Event } from '../src/types';
 import { EventCard } from '../src/components/ui/EventCard';
@@ -68,6 +69,13 @@ export default function SearchScreen() {
     setFilters(prev => ({
       ...prev,
       availability: prev.availability === availability ? undefined : availability,
+    }));
+  };
+
+  const handleDateRangeFilter = (dateRange: { start: Date; end: Date } | undefined) => {
+    setFilters(prev => ({
+      ...prev,
+      dateRange,
     }));
   };
 
@@ -164,7 +172,7 @@ export default function SearchScreen() {
           <View style={styles.filtersSection}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Filtres</Text>
-              {(selectedLocation || filters.sport || filters.skillLevel || filters.availability) && (
+              {(selectedLocation || filters.sport || filters.skillLevel || filters.availability || filters.dateRange) && (
                 <TouchableOpacity onPress={clearFilters}>
                   <Text style={styles.clearButton}>Effacer</Text>
                 </TouchableOpacity>
@@ -257,6 +265,16 @@ export default function SearchScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+            </View>
+
+            {/* Période */}
+            <View style={styles.filterGroup}>
+              <Text style={styles.filterLabel}>Période</Text>
+              <DateRangePicker
+                value={filters.dateRange}
+                onDateRangeChange={handleDateRangeFilter}
+                placeholder="Toutes les dates"
+              />
             </View>
 
             {/* Disponibilité */}

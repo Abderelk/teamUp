@@ -9,14 +9,31 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.teamup.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Cette application utilise la localisation pour trouver des événements sportifs près de vous.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Cette application utilise la localisation pour trouver des événements sportifs près de vous.",
+        "NSCameraUsageDescription": "Cette application utilise l'appareil photo pour prendre et partager des photos dans les discussions.",
+        "NSPhotoLibraryUsageDescription": "Cette application accède à vos photos pour les partager dans les discussions.",
+        "NSMicrophoneUsageDescription": "Cette application utilise le microphone pour les messages vocaux."
+      }
     },
     "android": {
+      "package": "com.teamup.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -32,6 +49,22 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Cette application utilise la localisation pour trouver des événements sportifs près de vous et vous aider à découvrir des activités dans votre région.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#007AFF",
+          "defaultChannel": "teamup-notifications"
         }
       ]
     ],

@@ -19,9 +19,56 @@ service cloud.firestore {
         && request.auth.uid == resource.data.organizerId
         && validateEventData(request.resource.data);
       allow delete: if request.auth != null 
-        && request
-        
-        .auth.uid == resource.data.organizerId;
+        && request.auth.uid == resource.data.organizerId;
+    }
+    
+    // Règles pour les chats d'événements
+    match /chats/{chatId} {
+      allow read: if request.auth != null 
+        && isParticipantInChat(chatId);
+      allow create: if request.auth != null 
+        && request.auth.uid in request.resource.data.participantIds
+        && validateChatData(request.resource.data);
+      allow update: if request.auth != null 
+        && isParticipantInChat(chatId)
+        && validateChatData(request.resource.data);
+      allow delete: if false; // Les chats ne sont pas supprimés
+      
+      // Règles pour les messages du chat
+      match /messages/{messageId} {
+        allow read: if request.auth != null 
+          && isParticipantInChat(chatId);
+        allow create: if request.auth != null 
+          && isParticipantInChat(chatId)
+          && request.auth.uid == request.resource.data.authorId
+          && validateMessageData(request.resource.data);
+        allow update: if request.auth != null 
+          && request.auth.uid == resource.data.authorId
+          && validateMessageData(request.resource.data);
+        allow delete: if request.auth != null 
+          && request.auth.uid == resource.data.authorId;
+      }
+    }
+    
+    // Règles pour les notifications
+    match /notifications/{notificationId} {
+      allow read, update: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId
+        && validateNotificationData(request.resource.data);
+      allow delete: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+    }
+    
+    // Règles pour les profils sportifs
+    match /sportProfiles/{userId} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null 
+        && request.auth.uid == userId
+        && validateSportProfileData(request.resource.data);
+      allow delete: if request.auth != null 
+        && request.auth.uid == userId;
     }
     
     // Fonctions de validation
@@ -52,6 +99,46 @@ service cloud.firestore {
         && location.city is string && location.city.size() > 0 && location.city.size() <= 100
         && (!('name' in location) || (location.name is string && location.name.size() <= 100))
         && (!('address' in location) || (location.address is string && location.address.size() <= 200));
+    }
+    
+    // Fonctions de validation pour les chats
+    function isParticipantInChat(chatId) {
+      return request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
+    }
+    
+    function validateChatData(data) {
+      return data.keys().hasAll(['type', 'name', 'participantIds', 'isActive'])
+        && data.type is string && data.type == 'event'
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.participantIds is list && data.participantIds.size() >= 1
+        && data.isActive is bool
+        && (!('eventId' in data) || data.eventId is string);
+    }
+    
+    function validateMessageData(data) {
+      return data.keys().hasAll(['chatId', 'authorId', 'authorName', 'content', 'type'])
+        && data.chatId is string
+        && data.authorId is string
+        && data.authorName is string && data.authorName.size() > 0 && data.authorName.size() <= 100
+        && data.content is string && data.content.size() > 0 && data.content.size() <= 1000
+        && data.type is string && data.type in ['text', 'system', 'image'];
+    }
+    
+    function validateNotificationData(data) {
+      return data.keys().hasAll(['userId', 'type', 'title', 'body', 'isRead'])
+        && data.userId is string
+        && data.type is string && data.type in ['event_invite', 'team_invite', 'event_update', 'event_cancelled', 'team_message', 'chat_message', 'general']
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 100
+        && data.body is string && data.body.size() > 0 && data.body.size() <= 500
+        && data.isRead is bool;
+    }
+    
+    function validateSportProfileData(data) {
+      return data.keys().hasAll(['userId', 'favoriteActivities', 'skillLevels', 'availability'])
+        && data.userId is string
+        && data.favoriteActivities is list
+        && data.skillLevels is map
+        && data.availability is list;
     }
   }
 }

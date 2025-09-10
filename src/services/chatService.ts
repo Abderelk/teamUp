@@ -341,6 +341,35 @@ export class ChatService {
   }
 
   /**
+   * Envoyer un message avec image
+   */
+  async sendImageMessage(
+    chatId: string,
+    authorId: string,
+    authorName: string,
+    imageUrl: string,
+    caption?: string
+  ): Promise<string> {
+    try {
+      const messageData: CreateChatMessage = {
+        chatId,
+        authorId,
+        authorName,
+        content: caption || 'Image partagée',
+        type: 'image',
+        metadata: {
+          imageUrl
+        }
+      };
+
+      return await this.sendMessage(messageData);
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'envoi de l\'image:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Obtenir les messages d'un chat
    */
   async getChatMessages(chatId: string, limitCount: number = 50): Promise<ChatMessage[]> {

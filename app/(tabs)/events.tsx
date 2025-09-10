@@ -19,6 +19,7 @@ import { useRealtimeNotifications } from '../../src/hooks/useRealtimeNotificatio
 import { useRealtimeEvents } from '../../src/hooks/useRealtimeEvents';
 import { NotificationBadge } from '../../src/components/ui/NotificationBadge';
 import { getSkillLevelIcon, getSkillLevelColor } from '../../src/utils/skillLevel';
+import { getSportIcon, getSportIconColor } from '../../src/utils/sportIcons';
 import { MapView } from '../../src/components/ui/MapView';
 import { Event } from '../../src/types';
 import ChatIntegrationService from '../../src/services/chatIntegrationService';
@@ -201,7 +202,12 @@ export default function EventsScreen() {
           </Text>
         </View>
         <View style={styles.infoItem}>
-          <Ionicons name="location-outline" size={16} color="#8E8E93" />
+          <Ionicons 
+            name={getSportIcon(item.sport) as any} 
+            size={16} 
+            color={getSportIconColor(item.sport)} 
+          />
+          <Ionicons name="location-outline" size={14} color="#8E8E93" style={{ marginLeft: 4 }} />
           <Text style={styles.infoText}>{item.location.city}</Text>
         </View>
         <View style={styles.infoItem}>
@@ -277,21 +283,17 @@ export default function EventsScreen() {
       {showMap ? (
         <View style={styles.mapContainer}>
           <MapView
-            locations={events.map(event => ({
-              latitude: event.location.coordinates?.latitude || 0,
-              longitude: event.location.coordinates?.longitude || 0,
-              address: event.location.address || event.location.name,
-              city: event.location.city,
+            events={events.filter(event => 
+              event.location.coordinates?.latitude && 
+              event.location.coordinates?.longitude
+            ).map(event => ({
+              id: event.id,
+              sport: event.sport,
+              location: event.location,
+              title: event.title,
             }))}
-            onLocationSelect={(location) => {
-              // Trouver l'événement correspondant
-              const selectedEvent = events.find(event => 
-                event.location.coordinates?.latitude === location.latitude &&
-                event.location.coordinates?.longitude === location.longitude
-              );
-              if (selectedEvent) {
-                router.push(`/event/${selectedEvent.id}` as any);
-              }
+            onEventSelect={(event) => {
+              router.push(`/event/${event.id}` as any);
             }}
             showUserLocation
             style={styles.map}

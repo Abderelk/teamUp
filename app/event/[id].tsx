@@ -16,6 +16,7 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { Event, SportProfile } from '../../src/types';
 import { getEvent, joinEvent, leaveEvent, deleteEvent } from '../../src/services/firebase/events';
 import { getSkillLevelIcon, getSkillLevelColor } from '../../src/utils/skillLevel';
+import { getSportIcon, getSportIconColor } from '../../src/utils/sportIcons';
 import { canUserJoinEvent } from '../../src/utils/eventRestrictions';
 import { Toast } from '../../src/components/Toast';
 import { useToast } from '../../src/hooks/useToast';
@@ -361,7 +362,12 @@ export default function EventDetailScreen() {
         {/* Lieu */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="location" size={24} color="#007AFF" />
+            <Ionicons 
+              name={getSportIcon(event.sport) as any} 
+              size={24} 
+              color={getSportIconColor(event.sport)} 
+            />
+            <Ionicons name="location" size={20} color="#007AFF" style={{ marginLeft: 8 }} />
             <Text style={styles.sectionTitle}>Lieu</Text>
           </View>
           

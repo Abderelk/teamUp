@@ -10,6 +10,8 @@ import {
 import RNMapView, { Marker, Region, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import { Event, Sport } from '../../types';
+import { getSportIcon, getSportIconColor } from '../../utils/sportIcons';
 
 export interface MapLocation {
   latitude: number;
@@ -18,9 +20,26 @@ export interface MapLocation {
   city?: string;
 }
 
+export interface MapEvent {
+  id: string;
+  sport: Sport;
+  location: {
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+    address?: string;
+    city?: string;
+    name?: string;
+  };
+  title?: string;
+}
+
 export interface MapViewProps {
   locations?: MapLocation[];
+  events?: MapEvent[];
   onLocationSelect?: (location: MapLocation) => void;
+  onEventSelect?: (event: MapEvent) => void;
   onRegionChange?: (region: Region) => void;
   initialRegion?: Region;
   showUserLocation?: boolean;
@@ -40,7 +59,9 @@ const defaultRegion: Region = {
 
 export function MapView({
   locations = [],
+  events = [],
   onLocationSelect,
+  onEventSelect,
   onRegionChange,
   initialRegion = defaultRegion,
   showUserLocation = true,
@@ -147,7 +168,7 @@ export function MapView({
       >
         {locations.map((location, index) => (
           <Marker
-            key={index}
+            key={`location-${index}`}
             coordinate={{
               latitude: location.latitude,
               longitude: location.longitude,
@@ -157,6 +178,29 @@ export function MapView({
           >
             <View style={styles.markerContainer}>
               <Ionicons name="location" size={24} color="#007AFF" />
+            </View>
+          </Marker>
+        ))}
+        
+        {events.map((event, index) => (
+          <Marker
+            key={`event-${event.id}`}
+            coordinate={{
+              latitude: event.location.coordinates.latitude,
+              longitude: event.location.coordinates.longitude,
+            }}
+            title={event.title || event.location.name}
+            description={`${event.sport} • ${event.location.city}`}
+            onPress={() => onEventSelect?.(event)}
+          >
+            <View style={styles.eventMarkerContainer}>
+              <View style={[styles.eventMarkerBackground, { backgroundColor: getSportIconColor(event.sport) }]}>
+                <Ionicons 
+                  name={getSportIcon(event.sport) as any} 
+                  size={20} 
+                  color="white" 
+                />
+              </View>
             </View>
           </Marker>
         ))}
@@ -292,5 +336,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 3,
+  },
+  eventMarkerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eventMarkerBackground: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });

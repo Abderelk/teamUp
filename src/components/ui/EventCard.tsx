@@ -8,6 +8,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Event } from '../../types';
 import { getSkillLevelIcon, getSkillLevelColor } from '../../utils/skillLevel';
+import { getSportIcon, getSportIconColor } from '../../utils/sportIcons';
 
 export interface EventCardProps {
   event: Event;
@@ -102,7 +103,12 @@ export function EventCard({ event, onPress, showDistance }: EventCardProps) {
         
         <View style={styles.infoRow}>
           <View style={styles.infoItem}>
-            <Ionicons name="location-outline" size={16} color="#8E8E93" />
+            <Ionicons 
+              name={getSportIcon(event.sport) as any} 
+              size={16} 
+              color={getSportIconColor(event.sport)} 
+            />
+            <Ionicons name="location-outline" size={14} color="#8E8E93" style={{ marginLeft: 4 }} />
             <Text style={styles.infoText} numberOfLines={1}>
               {event.location.city}
               {distance && ` • ${distance.toFixed(1)}km`}

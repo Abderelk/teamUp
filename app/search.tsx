@@ -126,18 +126,14 @@ export default function SearchScreen() {
         /* Vue carte */
         <View style={styles.mapContainer}>
           <MapView
-            locations={events.map(event => ({
-              latitude: event.location.coordinates.latitude,
-              longitude: event.location.coordinates.longitude,
-              address: event.location.address,
-              city: event.location.city,
+            events={events.map(event => ({
+              id: event.id,
+              sport: event.sport,
+              location: event.location,
+              title: event.title,
             }))}
-            onLocationSelect={(location) => {
-              setSelectedLocation({
-                address: location.address || '',
-                coordinates: [location.longitude, location.latitude],
-                city: location.city,
-              });
+            onEventSelect={(event) => {
+              router.push(`/event/${event.id}`);
             }}
             showUserLocation
             style={styles.map}

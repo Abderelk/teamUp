@@ -1,5 +1,5 @@
 import {setGlobalOptions} from "firebase-functions";
-import {onDocumentUpdated} from "firebase-functions/v2/firestore";
+import {onDocumentUpdated, onDocumentCreated} from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 
@@ -191,5 +191,123 @@ export const onEventUpdate = onDocumentUpdated("events/{eventId}", async (event:
 
   } catch (error) {
     logger.error('Erreur lors du traitement de la notification:', error);
+  }
+});
+
+interface ChatMessage {
+  id: string;
+  chatId: string;
+  authorId: string;
+  authorName: string;
+  content: string;
+  type: 'text' | 'image' | 'system';
+  timestamp: admin.firestore.Timestamp;
+}
+
+interface Chat {
+  id: string;
+  type: 'event';
+  name: string;
+  participantIds: string[];
+  eventId: string;
+}
+
+// Cloud Function qui se déclenche lors de la création d'un nouveau message
+export const onMessageCreate = onDocumentCreated("chats/{chatId}/messages/{messageId}", async (event: any) => {
+  const messageData = event.data?.data() as ChatMessage;
+  const chatId = event.params.chatId;
+
+  if (!messageData) {
+    logger.error('Données de message manquantes');
+    return;
+  }
+
+  // Ignorer les messages système
+  if (messageData.type === 'system') {
+    logger.info('Message système ignoré');
+    return;
+  }
+
+  logger.info(`Nouveau message détecté dans le chat ${chatId} par ${messageData.authorId}`);
+
+  try {
+    // Récupérer les informations du chat
+    const chatDoc = await admin.firestore().collection('chats').doc(chatId).get();
+    if (!chatDoc.exists) {
+      logger.error('Chat introuvable:', chatId);
+      return;
+    }
+
+    const chatData = { id: chatId, ...chatDoc.data() } as Chat;
+    
+    // Récupérer les informations de l'auteur
+    const authorProfile = await getUserProfile(messageData.authorId);
+    if (!authorProfile) {
+      logger.error('Profil auteur introuvable:', messageData.authorId);
+      return;
+    }
+
+    // Obtenir tous les participants sauf l'auteur
+    const recipientIds = chatData.participantIds.filter(id => id !== messageData.authorId);
+    
+    if (recipientIds.length === 0) {
+      logger.info('Aucun destinataire pour ce message');
+      return;
+    }
+
+    // Récupérer les profils des destinataires
+    const recipientProfiles = await Promise.all(
+      recipientIds.map(id => getUserProfile(id))
+    );
+
+    const validRecipients = recipientProfiles.filter(profile => 
+      profile && 
+      profile.fcmToken?.token &&
+      profile.notificationPreferences?.messages !== false
+    ) as UserProfile[];
+
+    if (validRecipients.length === 0) {
+      logger.info('Aucun destinataire valide avec notifications activées');
+      return;
+    }
+
+    // Créer le titre et le message de notification pour les événements
+    const authorName = authorProfile.displayName || messageData.authorName || 'Quelqu\'un';
+    const notificationTitle = `🏃‍♂️ ${chatData.name}`;
+
+    // Tronquer le contenu si trop long
+    const contentPreview = messageData.content.length > 100 
+      ? messageData.content.substring(0, 100) + '...' 
+      : messageData.content;
+
+    const notificationBody = `${authorName}: ${contentPreview}`;
+
+    // Données pour la navigation vers l'événement
+    const notificationData = {
+      type: 'chat_message',
+      chatId,
+      chatType: 'event',
+      authorId: messageData.authorId,
+      authorName,
+      eventId: chatData.eventId,
+    };
+
+    // Envoyer les notifications à tous les destinataires
+    const notificationPromises = validRecipients.map(recipient => 
+      sendPushNotification(
+        recipient.fcmToken!,
+        notificationTitle,
+        notificationBody,
+        notificationData
+      )
+    );
+
+    const results = await Promise.allSettled(notificationPromises);
+    const successCount = results.filter(result => result.status === 'fulfilled' && result.value).length;
+
+    logger.info(`Notifications envoyées: ${successCount}/${validRecipients.length} réussies`);
+
+  } catch (error) {
+    logger.error('Erreur lors de l\'envoi des notifications de message:', error);
   }
 });

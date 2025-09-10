@@ -4,11 +4,13 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase/config';
+import { navigationService } from './navigationService';
 
 // Configuration des notifications
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),
@@ -67,8 +69,6 @@ class FCMService {
       });
 
       this.expoPushToken = token.data;
-      console.log('Token FCM obtenu:', this.expoPushToken);
-
       return this.expoPushToken;
     } catch (error) {
       console.error('Erreur lors de l\'initialisation FCM:', error);
@@ -97,8 +97,6 @@ class FCMService {
         fcmToken,
         updatedAt: Timestamp.now(),
       });
-
-      console.log('Token FCM sauvegardé pour l\'utilisateur:', userId);
     } catch (error) {
       console.error('Erreur lors de la sauvegarde du token FCM:', error);
       throw error;
@@ -116,8 +114,6 @@ class FCMService {
         fcmToken: null,
         updatedAt: Timestamp.now(),
       });
-
-      console.log('Token FCM supprimé pour l\'utilisateur:', userId);
     } catch (error) {
       console.error('Erreur lors de la suppression du token FCM:', error);
       throw error;
@@ -138,22 +134,21 @@ class FCMService {
 
     // Listener pour les notifications reçues en foreground (mobile)
     const notificationListener = Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notification reçue en foreground:', notification);
-      // Ici vous pouvez ajouter une logique personnalisée
+      const data = notification.request.content.data;
+      
+      if (data?.type === 'chat_message') {
+        console.log('💬 Nouveau message de chat reçu');
+      }
     });
 
     // Listener pour les interactions avec les notifications (mobile)
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log('Notification cliquée:', response);
-      
       const data = response.notification.request.content.data;
       
-      // Navigation basée sur le type de notification
-      if (data?.type === 'event_join' && data?.eventId) {
-        // Naviguer vers l'événement
-        // Vous devrez implémenter la navigation ici
-        console.log('Naviguer vers l\'événement:', data.eventId);
-      }
+      // Délai pour s'assurer que l'app est complètement chargée
+      setTimeout(() => {
+        navigationService.handleNotificationNavigation(data);
+      }, 500);
     });
 
     return {

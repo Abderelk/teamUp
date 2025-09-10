@@ -17,11 +17,13 @@ import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../src/services/firebase/config';
 import { NotificationPreferences } from '../../src/types';
 import { useFCMNotifications } from '../../src/hooks/useFCMNotifications';
+import { useNotification } from '../../src/contexts/NotificationContext';
 
 export default function NotificationsScreen() {
   const { userProfile, refreshUserProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const { isInitialized, hasToken, sendTestNotification, saveToken, token } = useFCMNotifications();
+  const { showNotification } = useNotification();
   
   // Log pour debug
   useEffect(() => {
@@ -251,12 +253,31 @@ export default function NotificationsScreen() {
             </View>
           )}
           
+          <View style={styles.testSection}>
+            <Text style={styles.sectionTitle}>Test des notifications</Text>
+            
+            <TouchableOpacity 
+              style={styles.testButton}
+              onPress={() => {
+                showNotification({
+                  title: '💬 Nouveau message',
+                  message: 'Ceci est une notification de test pour les messages d\'événements',
+                  type: 'chat',
+                  duration: 4000,
+                });
+              }}
+            >
+              <Ionicons name="chatbubble-outline" size={20} color="#FFFFFF" />
+              <Text style={styles.buttonText}>Test notification événement</Text>
+            </TouchableOpacity>
+          </View>
+
           {Platform.OS === 'web' && (
             <View style={styles.webNotSupportedContainer}>
               <Ionicons name="information-circle-outline" size={24} color="#FF9500" />
               <Text style={styles.webNotSupportedText}>
                 Les notifications push ne sont pas supportées sur la version web. 
-                Utilisez l'application mobile pour recevoir des notifications.
+                Les notifications in-app s'affichent à la place.
               </Text>
             </View>
           )}
@@ -410,5 +431,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#F57C00',
     lineHeight: 20,
+  },
+  testSection: {
+    marginTop: 20,
+    gap: 16,
   },
 });

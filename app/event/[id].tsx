@@ -22,6 +22,7 @@ import { useToast } from '../../src/hooks/useToast';
 import { useAlertHelpers } from '../../src/hooks/useAlert';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../src/services/firebase/config';
+import ChatIntegrationService from '../../src/services/chatIntegrationService';
 
 const { width } = Dimensions.get('window');
 
@@ -158,6 +159,29 @@ export default function EventDetailScreen() {
       'Êtes-vous sûr de vouloir supprimer cet événement ?',
       confirmDelete
     );
+  };
+
+  const handleOpenEventChat = async () => {
+    if (!event || !userProfile || !eventId) return;
+    
+    try {
+      // Obtenir ou créer le chat de l'événement
+      const chatId = await ChatIntegrationService.getOrCreateEventChat(
+        eventId,
+        event.title,
+        event.organizerId,
+        event.participants
+      );
+      
+      if (chatId) {
+        router.push(`/event/${id}/chat` as any);
+      } else {
+        showError('Impossible d\'ouvrir la discussion');
+      }
+    } catch (error) {
+      console.error('Error opening event chat:', error);
+      showError('Erreur lors de l\'ouverture de la discussion');
+    }
   };
 
   useEffect(() => {
@@ -309,6 +333,30 @@ export default function EventDetailScreen() {
             )}
           </View>
         </View>
+
+        {/* Discussion - Visible seulement pour les participants et l'organisateur */}
+        {(isParticipant || isOrganizer) && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="chatbubbles" size={24} color="#007AFF" />
+              <Text style={styles.sectionTitle}>Discussion de l'événement</Text>
+            </View>
+            
+            <Text style={styles.chatDescription}>
+              Discutez avec les autres participants de l'événement, posez vos questions et coordonnez-vous !
+            </Text>
+            
+            <TouchableOpacity
+              style={styles.chatButton}
+              onPress={handleOpenEventChat}
+              disabled={actionLoading}
+            >
+              <Ionicons name="chatbubble-ellipses" size={20} color="#007AFF" />
+              <Text style={styles.chatButtonText}>Ouvrir la discussion</Text>
+              <Ionicons name="chevron-forward" size={16} color="#8E8E93" />
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Lieu */}
         <View style={styles.section}>
@@ -701,5 +749,28 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     marginLeft: 6,
+  },
+  chatDescription: {
+    fontSize: 14,
+    color: '#8E8E93',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  chatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8F9FA',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  chatButtonText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '600',
+    marginLeft: 12,
   },
 });

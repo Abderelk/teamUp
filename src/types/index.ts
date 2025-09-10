@@ -6,7 +6,9 @@ export type SkillLevel = 'beginner' | 'intermediate' | 'advanced';
 export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
 export type MessageType = 'text' | 'system' | 'image';
-export type NotificationType = 'event_invite' | 'team_invite' | 'event_update' | 'event_cancelled' | 'team_message' | 'general';
+export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+export type ChatType = 'event';
+export type NotificationType = 'event_invite' | 'team_invite' | 'event_update' | 'event_cancelled' | 'team_message' | 'chat_message' | 'general';
 
 // ===== INTERFACES GÉOLOCALISATION =====
 
@@ -161,7 +163,61 @@ export interface Team {
   updatedAt: Timestamp;
 }
 
-// ===== INTERFACES MESSAGES =====
+// ===== INTERFACES CHAT ET MESSAGES =====
+
+export interface Chat {
+  id: string;
+  type: ChatType; // Toujours 'event'
+  name: string;
+  description?: string;
+  
+  // Référence à l'événement
+  eventId: string; // Obligatoire pour les chats d'événement
+  participantIds: string[]; // IDs des participants au chat
+  
+  // Métadonnées du dernier message
+  lastMessage?: {
+    content: string;
+    authorId: string;
+    authorName: string;
+    timestamp: Timestamp;
+    type: MessageType;
+  };
+  
+  // Paramètres du chat
+  isActive: boolean;
+  unreadCount?: { [userId: string]: number };
+  
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  chatId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  content: string;
+  type: MessageType;
+  status: MessageStatus;
+  timestamp: Timestamp;
+  
+  // Pour les messages système ou les images
+  metadata?: {
+    imageUrl?: string;
+    systemType?: 'user_joined' | 'user_left' | 'chat_created' | 'event_updated';
+    [key: string]: any;
+  };
+  
+  // Réponse à un autre message
+  replyTo?: {
+    messageId: string;
+    authorName: string;
+    content: string;
+  };
+}
 
 export interface Message {
   id: string;
@@ -208,6 +264,8 @@ export type CreateEvent = Omit<Event, 'id' | 'createdAt' | 'updatedAt' | 'curren
 export type CreateTeam = Omit<Team, 'id' | 'createdAt' | 'updatedAt' | 'stats'>;
 export type CreateSportProfile = Omit<SportProfile, 'createdAt' | 'updatedAt'>;
 export type CreateMessage = Omit<Message, 'id' | 'timestamp'>;
+export type CreateChatMessage = Omit<ChatMessage, 'id' | 'timestamp' | 'status'>;
+export type CreateChat = Omit<Chat, 'id' | 'createdAt' | 'updatedAt' | 'lastMessage' | 'unreadCount'>;
 export type CreateNotification = Omit<Notification, 'id' | 'createdAt' | 'isRead'>;
 export type CreateVenue = Omit<Venue, 'id'>;
 
@@ -303,4 +361,6 @@ export const SKILL_LEVELS: SkillLevel[] = ['beginner', 'intermediate', 'advanced
 export const DAYS_OF_WEEK: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 export const EVENT_STATUSES: EventStatus[] = ['draft', 'published', 'cancelled', 'completed'];
 export const MESSAGE_TYPES: MessageType[] = ['text', 'system', 'image'];
-export const NOTIFICATION_TYPES: NotificationType[] = ['event_invite', 'team_invite', 'event_update', 'event_cancelled', 'team_message', 'general'];
+export const MESSAGE_STATUSES: MessageStatus[] = ['sending', 'sent', 'delivered', 'read', 'failed'];
+export const CHAT_TYPES: ChatType[] = ['team', 'event', 'direct'];
+export const NOTIFICATION_TYPES: NotificationType[] = ['event_invite', 'team_invite', 'event_update', 'event_cancelled', 'team_message', 'chat_message', 'general'];

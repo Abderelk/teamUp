@@ -20,6 +20,9 @@ import { useRealtimeEvents } from '../../src/hooks/useRealtimeEvents';
 import { NotificationBadge } from '../../src/components/ui/NotificationBadge';
 import { getSkillLevelIcon, getSkillLevelColor } from '../../src/utils/skillLevel';
 import { MapView } from '../../src/components/ui/MapView';
+import { Event } from '../../src/types';
+import ChatIntegrationService from '../../src/services/chatIntegrationService';
+import ChatNotificationBadge from '../../src/components/chat/ChatNotificationBadge';
 
 export default function EventsScreen() {
   const { userProfile } = useAuth();
@@ -79,7 +82,68 @@ export default function EventsScreen() {
 
   // Plus besoin d'auto-refresh, les hooks temps réel s'en chargent !
 
-  const renderEventItem = ({ item }: { item: Event }) => (
+  const handleOpenEventChat = async (event: Event, e: any) => {
+    e.stopPropagation(); // Empêcher la navigation vers la page de détail
+    
+    if (!userProfile) {
+      Alert.alert('Erreur', 'Vous devez être connecté');
+      return;
+    }
+
+    console.log('🚀 Tentative d\'ouverture du chat pour l\'événement:', {
+      eventId: event.id,
+      eventTitle: event.title,
+      organizerId: event.organizerId,
+      participants: event.participants,
+      currentUserId: userProfile.uid
+    });
+
+    // Vérifier si l'utilisateur peut accéder au chat (organisateur ou participant)
+    const isOrganizer = event.organizerId === userProfile.uid;
+    const isParticipant = event.participants?.includes(userProfile.uid) || false;
+    
+    console.log('👤 Vérification des droits:', { isOrganizer, isParticipant });
+    
+    if (!isOrganizer && !isParticipant) {
+      Alert.alert(
+        'Accès restreint', 
+        'Vous devez participer à cet événement pour accéder à la discussion.'
+      );
+      return;
+    }
+
+    try {
+      // Obtenir ou créer le chat de l'événement
+      console.log('🔄 Appel de getOrCreateEventChat...');
+      const chatId = await ChatIntegrationService.getOrCreateEventChat(
+        event.id,
+        event.title,
+        event.organizerId,
+        event.participants || []
+      );
+      
+      console.log('📝 Chat ID reçu:', chatId);
+      
+      if (chatId) {
+        console.log('🧭 Navigation vers le chat:', `/event/${event.id}/chat`);
+        router.push(`/event/${event.id}/chat` as any);
+      } else {
+        console.error('❌ Chat ID est null');
+        Alert.alert('Erreur', 'Impossible d\'ouvrir la discussion');
+      }
+    } catch (error) {
+      console.error('❌ Error opening event chat:', error);
+      Alert.alert('Erreur', `Erreur lors de l'ouverture de la discussion: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+  };
+
+
+  const renderEventItem = ({ item }: { item: Event }) => {
+    const isOrganizer = item.organizerId === userProfile?.uid;
+    const isParticipant = item.participants?.includes(userProfile?.uid || '') || false;
+    const canAccessChat = isOrganizer || isParticipant;
+
+    return (
     <TouchableOpacity 
       style={styles.eventCard}
       onPress={() => router.push(`/event/${item.id}` as any)}
@@ -90,6 +154,16 @@ export default function EventsScreen() {
           <Text style={styles.eventSport}>{item.sport}</Text>
         </View>
         <View style={styles.eventActions}>
+          {/* Bouton Chat - visible pour les organisateurs et participants */}
+          {canAccessChat && (
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.chatButton]}
+              onPress={(e) => handleOpenEventChat(item, e)}
+            >
+              <Ionicons name="chatbubbles" size={20} color="#34C759" />
+              <ChatNotificationBadge eventId={item.id} size="small" />
+            </TouchableOpacity>
+          )}
           {item.organizerId === userProfile?.uid && (
             <>
               <TouchableOpacity 
@@ -158,7 +232,8 @@ export default function EventsScreen() {
         <Text style={styles.organizerName}>Par {item.organizerName}</Text>
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   if (eventsLoading) {
     return (
@@ -372,6 +447,13 @@ const styles = StyleSheet.create({
   actionButton: {
     padding: 8,
     marginLeft: 4,
+  },
+  chatButton: {
+    backgroundColor: '#F0FFF4',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#34C759',
+    position: 'relative',
   },
   eventDescription: {
     fontSize: 14,

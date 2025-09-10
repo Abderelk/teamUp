@@ -4,9 +4,19 @@ import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRealtimeNotifications } from '../../src/hooks/useRealtimeNotifications';
 import { NotificationBadge } from '../../src/components/ui/NotificationBadge';
+import { useRealtimeChat } from '../../src/contexts/ChatContext';
+import { useAuth } from '../../src/hooks/useAuth';
 
 export default function TabLayout() {
   const { unreadCount } = useRealtimeNotifications();
+  const { chats } = useRealtimeChat();
+  const { user } = useAuth();
+
+  // Calculer le nombre de messages non lus dans les chats
+  const chatUnreadCount = chats.reduce((total, chat) => {
+    const userUnreadCount = chat.unreadCount?.[user?.uid || ''] || 0;
+    return total + userUnreadCount;
+  }, 0);
 
   return (
     <Tabs
@@ -23,6 +33,18 @@ export default function TabLayout() {
             <View style={{ position: 'relative' }}>
               <Ionicons name="calendar" size={size} color={color} />
               <NotificationBadge count={unreadCount} size="small" />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: 'Chat',
+          tabBarIcon: ({ color, size }) => (
+            <View style={{ position: 'relative' }}>
+              <Ionicons name="chatbubbles" size={size} color={color} />
+              <NotificationBadge count={chatUnreadCount} size="small" />
             </View>
           ),
         }}

@@ -10,6 +10,30 @@ import { useAuth } from '../src/hooks/useAuth';
 import { OnboardingProvider } from '../src/contexts/OnboardingContext';
 import { AlertProvider } from '../src/hooks/useAlert';
 import { useFCMNotifications } from '../src/hooks/useFCMNotifications';
+import { ChatProvider } from '../src/contexts/ChatContext';
+import { NotificationProvider as InAppNotificationProvider, useNotification } from '../src/contexts/NotificationContext';
+import InAppNotification from '../src/components/notifications/InAppNotification';
+import { navigationService } from '../src/services/navigationService';
+
+function NotificationOverlay() {
+  const { currentNotification, hideNotification } = useNotification();
+
+  return (
+    <InAppNotification
+      visible={!!currentNotification}
+      title={currentNotification?.title || ''}
+      message={currentNotification?.message || ''}
+      type={currentNotification?.type}
+      duration={currentNotification?.duration}
+      onPress={currentNotification?.onPress}
+      onClose={() => {
+        if (currentNotification) {
+          hideNotification(currentNotification.id);
+        }
+      }}
+    />
+  );
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -25,6 +49,13 @@ export default function RootLayout() {
   
   // Initialiser les notifications FCM
   const { isInitialized } = useFCMNotifications();
+
+  // Initialiser le service de navigation avec le router
+  useEffect(() => {
+    if (navigationReady && router) {
+      navigationService.initialize(router);
+    }
+  }, [navigationReady, router]);
 
   useEffect(() => {
     // Attendre que tout soit prêt avant de commencer la navigation
@@ -46,7 +77,9 @@ export default function RootLayout() {
     const inTabsGroup = segments[0] === '(tabs)';
     const inAccountGroup = segments[0] === 'account';
     const inEventGroup = segments[0] === 'event';
+    const inTeamGroup = segments[0] === 'team';
     const inSearchPage = segments[0] === 'search';
+    const inChatGroup = segments[0] === 'chat';
 
 
     // Utilisateur non authentifié
@@ -72,13 +105,13 @@ export default function RootLayout() {
         router.replace('/(onboarding)');
       }
     } else {
-      if (!inTabsGroup && !inAccountGroup && !inEventGroup && !inSearchPage && lastRedirect !== 'main') {
+      if (!inTabsGroup && !inAccountGroup && !inEventGroup && !inTeamGroup && !inSearchPage && !inChatGroup && lastRedirect !== 'main') {
         setLastRedirect('main');
         router.replace('/(tabs)/events');
       }
     }
 
-    if ((isAuthenticated && userProfile?.onboardingCompleted && (inTabsGroup || inAccountGroup || inEventGroup || inSearchPage)) ||
+    if ((isAuthenticated && userProfile?.onboardingCompleted && (inTabsGroup || inAccountGroup || inEventGroup || inTeamGroup || inSearchPage || inChatGroup)) ||
         (isAuthenticated && !userProfile?.onboardingCompleted && inOnboardingGroup) ||
         (!isAuthenticated && inAuthGroup)) {
       if (lastRedirect) {
@@ -96,16 +129,22 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AlertProvider>
         <OnboardingProvider>
-          <Stack>
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-            <Stack.Screen name="account" options={{ headerShown: false }} />
-            <Stack.Screen name="event" options={{ headerShown: false }} />
-            <Stack.Screen name="search" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="auto" />
+          <InAppNotificationProvider>
+            <ChatProvider>
+              <NotificationOverlay />
+              <Stack>
+                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+                <Stack.Screen name="account" options={{ headerShown: false }} />
+                <Stack.Screen name="event" options={{ headerShown: false }} />
+                <Stack.Screen name="search" options={{ headerShown: false }} />
+                <Stack.Screen name="chat" options={{ headerShown: false }} />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <StatusBar style="auto" />
+            </ChatProvider>
+          </InAppNotificationProvider>
         </OnboardingProvider>
       </AlertProvider>
     </ThemeProvider>

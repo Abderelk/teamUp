@@ -9,11 +9,13 @@ import { useAuth } from '../../../src/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { getEvent } from '../../../src/services/firebase/events';
 import { Event } from '../../../src/types';
+import { useTheme } from '../../../src/contexts/ThemeContext';
 
 export default function EventChatScreen() {
   const { id: eventId } = useLocalSearchParams<{ id: string }>();
   const { userProfile } = useAuth();
   const router = useRouter();
+  const { colors } = useTheme();
   const [chatId, setChatId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [event, setEvent] = useState<Event | null>(null);
@@ -84,9 +86,9 @@ export default function EventChatScreen() {
               fontSize: 18,
             },
             headerStyle: {
-              backgroundColor: '#FFFFFF',
+              backgroundColor: colors.surface,
             },
-            headerTintColor: '#000000',
+            headerTintColor: colors.accent,
             headerBackTitleVisible: false,
           }} 
         />
@@ -118,9 +120,9 @@ export default function EventChatScreen() {
             fontSize: 18,
           },
           headerStyle: {
-            backgroundColor: '#FFFFFF',
+            backgroundColor: colors.surface,
           },
-          headerTintColor: '#000000',
+          headerTintColor: colors.accent,
           headerBackTitleVisible: false,
           headerLeft: () => (
             <TouchableOpacity
@@ -130,7 +132,7 @@ export default function EventChatScreen() {
               <Ionicons 
                 name={Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back'} 
                 size={24} 
-                color="#007AFF" 
+                color={colors.accent} 
               />
             </TouchableOpacity>
           ),
@@ -148,12 +150,10 @@ export default function EventChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
   },
 });

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ChatMessage } from '../../types';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ChatMessageItemProps {
   message: ChatMessage;
@@ -17,6 +18,7 @@ export function ChatMessageItem({
   showAuthor = true,
   onLongPress 
 }: ChatMessageItemProps) {
+  const { colors, isDarkMode } = useTheme();
   const formatTime = (timestamp: any) => {
     try {
       const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -44,10 +46,10 @@ export function ChatMessageItem({
   if (message.type === 'system') {
     return (
       <View style={styles.systemMessageContainer}>
-        <Text style={styles.systemMessageText}>
+        <Text style={[styles.systemMessageText, { backgroundColor: colors.surface, color: colors.textSecondary }]}>
           {message.content}
         </Text>
-        <Text style={styles.systemMessageTime}>
+        <Text style={[styles.systemMessageTime, { color: colors.textSecondary }]}>
           {formatTime(message.timestamp)}
         </Text>
       </View>
@@ -65,10 +67,10 @@ export function ChatMessageItem({
     >
       <View style={[
         styles.messageBubble,
-        isOwn ? styles.ownMessageBubble : styles.otherMessageBubble
+        isOwn ? [styles.ownMessageBubble, { backgroundColor: colors.accent }] : [styles.otherMessageBubble, { backgroundColor: colors.surface }]
       ]}>
         {showAuthor && !isOwn && (
-          <Text style={styles.authorName}>
+          <Text style={[styles.authorName, { color: colors.accent }]}>
             {getDisplayName(message.authorName, message.authorId)}
           </Text>
         )}
@@ -89,7 +91,7 @@ export function ChatMessageItem({
         
         <Text style={[
           styles.messageText,
-          isOwn ? styles.ownMessageText : styles.otherMessageText
+          isOwn ? styles.ownMessageText : [styles.otherMessageText, { color: colors.text }]
         ]}>
           {message.content}
         </Text>
@@ -97,7 +99,7 @@ export function ChatMessageItem({
         <View style={styles.messageFooter}>
           <Text style={[
             styles.messageTime,
-            isOwn ? styles.ownMessageTime : styles.otherMessageTime
+            isOwn ? styles.ownMessageTime : [styles.otherMessageTime, { color: isDarkMode ? colors.textSecondary : '#8E8E93' }]
           ]}>
             {formatTime(message.timestamp)}
           </Text>
@@ -146,17 +148,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   ownMessageBubble: {
-    backgroundColor: '#007AFF',
     borderBottomRightRadius: 4,
   },
   otherMessageBubble: {
-    backgroundColor: '#F2F2F7',
     borderBottomLeftRadius: 4,
   },
   authorName: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#007AFF',
     marginBottom: 4,
   },
   replyContainer: {
@@ -192,7 +191,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   otherMessageText: {
-    color: '#000000',
+    // Color will be set dynamically
   },
   messageFooter: {
     flexDirection: 'row',
@@ -208,7 +207,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   otherMessageTime: {
-    color: '#8E8E93',
+    // Color will be set dynamically based on theme
   },
   messageStatus: {
     marginLeft: 4,
@@ -229,8 +228,6 @@ const styles = StyleSheet.create({
   },
   systemMessageText: {
     fontSize: 13,
-    color: '#8E8E93',
-    backgroundColor: '#F2F2F7',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -238,7 +235,6 @@ const styles = StyleSheet.create({
   },
   systemMessageTime: {
     fontSize: 10,
-    color: '#8E8E93',
     marginTop: 4,
   },
 });

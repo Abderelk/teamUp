@@ -15,10 +15,10 @@ export const getSportIcon = (sport: Sport): string => {
     'running': 'footsteps-outline',          // Empreintes pour course
     'cycling': 'bicycle-outline',            // Vélo
     'swimming': 'water-outline',             // Eau pour natation
-    'other': 'fitness-outline'               // Haltère pour autres sports
+    'other': 'ellipse-outline'               // Forme neutre pour autres sports
   };
 
-  return sportIconMap[sport] || 'fitness-outline';
+  return sportIconMap[sport] || 'ellipse-outline';
 };
 
 /**
@@ -36,8 +36,8 @@ export const getSportIconColor = (sport: Sport): string => {
     'running': '#FF5722',       // Deep Orange
     'cycling': '#3F51B5',       // Indigo
     'swimming': '#00BCD4',      // Cyan
-    'other': '#757575'          // Grey
+    'other': '#007AFF'          // Blue neutre
   };
 
-  return sportColorMap[sport] || '#757575';
+  return sportColorMap[sport] || '#007AFF';
 };

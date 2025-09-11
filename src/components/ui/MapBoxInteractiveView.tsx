@@ -30,25 +30,69 @@ export interface MapEvent {
 
 export interface MapBoxInteractiveProps {
   events?: MapEvent[];
-  onEventSelect?: (event: MapEvent) => void;
+  onEventSelect?: (event: MapEvent, isDoubleClick?: boolean) => void;
   initialRegion?: {
     latitude: number;
     longitude: number;
     latitudeDelta: number;
     longitudeDelta: number;
   };
+  selectedEventId?: string;
   style?: any;
 }
 
-export function MapBoxInteractiveView({
-  events = [],
-  onEventSelect,
-  initialRegion,
-  style,
-}: MapBoxInteractiveProps) {
+export const MapBoxInteractiveView = React.forwardRef<any, MapBoxInteractiveProps>((
+  {
+    events = [],
+    onEventSelect,
+    initialRegion,
+    selectedEventId,
+    style,
+  },
+  ref
+) => {
   const [loading, setLoading] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
   const webViewRef = useRef<WebView>(null);
+  
+  // Expose methods to parent via ref
+  React.useImperativeHandle(ref, () => ({
+    centerOnEvent: (eventId: string) => {
+      console.log('centerOnEvent called via ref with:', eventId);
+      const event = events.find(e => e.id === eventId);
+      if (event?.location.coordinates && webViewRef.current) {
+        const { latitude, longitude } = event.location.coordinates;
+        const js = `
+          if (window.map) {
+            window.map.flyTo({
+              center: [${longitude}, ${latitude}],
+              zoom: 15,
+              duration: 1500
+            });
+          }
+        `;
+        webViewRef.current.injectJavaScript(js);
+      }
+    },
+    getCurrentLocation: () => {
+      console.log('getCurrentLocation called via ref');
+      setIsLocating(true);
+      if (webViewRef.current) {
+        const js = `
+          if (window.triggerGeolocation) {
+            window.triggerGeolocation();
+          }
+        `;
+        webViewRef.current.injectJavaScript(js);
+      }
+    },
+    injectJavaScript: (js: string) => {
+      console.log('injectJavaScript called via ref');
+      if (webViewRef.current) {
+        webViewRef.current.injectJavaScript(js);
+      }
+    }
+  }));
   
   const MAPBOX_TOKEN = 'pk.eyJ1IjoidGVhbXVwLWVsayIsImEiOiJjbWZhNmxnb2UxaDF4MmpzOWRnZG90YzRnIn0.IAd0xUzXyyVPVts9wba5sw';
   
@@ -108,11 +152,83 @@ export function MapBoxInteractiveView({
     }
   };
 
+  // Track if centering should happen
+  const [shouldCenter, setShouldCenter] = React.useState(false);
+  const [lastSelectedEventId, setLastSelectedEventId] = React.useState<string | null>(null);
+  
+  // Center on selected event when selectedEventId changes (only if it's a new selection)
+  React.useEffect(() => {
+    console.log('useEffect triggered with selectedEventId:', selectedEventId);
+    console.log('lastSelectedEventId:', lastSelectedEventId);
+    
+    // Only center if it's a new event selection (not the same event)
+    if (selectedEventId && selectedEventId !== lastSelectedEventId && webViewRef.current && !loading) {
+      const selectedEvent = events.find(e => e.id === selectedEventId);
+      console.log('Found selected event:', selectedEvent);
+      if (selectedEvent?.location.coordinates) {
+        const { latitude, longitude } = selectedEvent.location.coordinates;
+        console.log('Attempting to center on NEW selection:', latitude, longitude);
+        
+        const js = `
+          console.log('Injected JS running for new selection...');
+          if (window.map) {
+            console.log('Map exists, attempting flyTo...');
+            window.map.flyTo({
+              center: [${longitude}, ${latitude}],
+              zoom: 15,
+              duration: 1500
+            });
+            console.log('FlyTo executed');
+          } else {
+            console.log('Window.map not available');
+          }
+          true; // Return value for injection
+        `;
+        
+        // Délai pour s'assurer que la carte est prête
+        const attemptCenter = () => {
+          console.log('Attempting to inject JavaScript...');
+          if (webViewRef.current && webViewRef.current.injectJavaScript) {
+            webViewRef.current.injectJavaScript(js);
+          } else {
+            console.log('WebView ref or injectJavaScript not available');
+          }
+        };
+        
+        // Une seule tentative avec un délai raisonnable
+        setTimeout(attemptCenter, 1000);
+        
+        // Update last selected to prevent re-centering
+        setLastSelectedEventId(selectedEventId);
+      }
+    }
+  }, [selectedEventId, events, loading, lastSelectedEventId]);
+
   // Créer le HTML pour MapBox GL JS
   const createMapBoxHTML = () => {
     const markers = events.map((event, index) => {
       const color = getSportIconColor(event.sport as Sport);
       const icon = getSportIcon(event.sport as Sport);
+      
+      // Get emoji for the sport - correspond exactement au type Sport
+      const getEmojiForSport = (sport: string) => {
+        const sportEmojis: Record<string, string> = {
+          'football': '⚽',      // Football
+          'basketball': '🏀',  // Basketball
+          'tennis': '🎾',      // Tennis
+          'volleyball': '🏐',  // Volleyball
+          'badminton': '🏸',   // Badminton
+          'handball': '🤾',    // Handball
+          'ping-pong': '🏓',   // Ping-pong
+          'running': '🏃',     // Running
+          'cycling': '🚴',     // Cycling
+          'swimming': '🏊',    // Swimming
+          'other': '⚽'         // Icône plus neutre (ballon)
+        };
+        const emoji = sportEmojis[sport.toLowerCase()] || '⚽';
+        console.log('Sport mapping:', sport, '->', emoji);
+        return emoji;
+      };
       
       return `{
         id: "${event.id}",
@@ -121,6 +237,7 @@ export function MapBoxInteractiveView({
         sport: "${event.sport}",
         color: "${color}",
         icon: "${icon}",
+        emoji: "${getEmojiForSport(event.sport)}",
         address: "${(event.location.address || '').replace(/"/g, '\\"')}"
       }`;
     }).join(',');
@@ -232,19 +349,10 @@ export function MapBoxInteractiveView({
             markerElement.style.webkitUserSelect = 'none';
             markerElement.style.webkitTouchCallout = 'none';
             
-            // Icône basée sur le sport (simplifiée)
-            let iconEmoji = '🏃';
-            switch(event.sport.toLowerCase()) {
-              case 'football': iconEmoji = '⚽'; break;
-              case 'basketball': iconEmoji = '🏀'; break;
-              case 'tennis': iconEmoji = '🎾'; break;
-              case 'volleyball': iconEmoji = '🏐'; break;
-              case 'running': iconEmoji = '🏃'; break;
-              case 'cycling': iconEmoji = '🚴'; break;
-              case 'swimming': iconEmoji = '🏊'; break;
-              default: iconEmoji = '🏃'; break;
-            }
-            markerElement.innerHTML = iconEmoji;
+            // Utiliser l'emoji du sport depuis les données
+            markerElement.innerHTML = event.emoji || '🏃';
+            
+            console.log('Creating marker for sport:', event.sport, 'with emoji:', event.emoji);
             
             // Créer le contenu du popup
             const popupHTML = \`
@@ -257,6 +365,35 @@ export function MapBoxInteractiveView({
                 </button>
               </div>
             \`;
+            
+            // Ajouter les événements touch pour le clic long
+            markerElement.addEventListener('touchstart', (e) => {
+              e.preventDefault();
+              window.handleTouchStart(event.id);
+            });
+            
+            markerElement.addEventListener('touchend', (e) => {
+              e.preventDefault();
+              window.handleTouchEnd(event.id);
+            });
+            
+            markerElement.addEventListener('touchcancel', (e) => {
+              e.preventDefault();
+              window.handleTouchEnd(event.id);
+            });
+            
+            // Pour desktop (mousedown/mouseup)
+            markerElement.addEventListener('mousedown', (e) => {
+              window.handleTouchStart(event.id);
+            });
+            
+            markerElement.addEventListener('mouseup', (e) => {
+              window.handleTouchEnd(event.id);
+            });
+            
+            markerElement.addEventListener('mouseleave', (e) => {
+              window.handleTouchEnd(event.id);
+            });
             
             // Créer et ajouter le marqueur avec options fixes
             const marker = new mapboxgl.Marker({
@@ -273,13 +410,22 @@ export function MapBoxInteractiveView({
             .addTo(window.map);
           });
           
-          // Si des événements existent, ajuster la vue pour tous les inclure
-          if (events.length > 0) {
+          // Vue initiale plus large
+          if (events.length > 1) {
+            // S'il y a plusieurs événements, les afficher tous
             const bounds = new mapboxgl.LngLatBounds();
             events.forEach(event => {
               bounds.extend(event.coordinates);
             });
-            window.map.fitBounds(bounds, { padding: 50 });
+            window.map.fitBounds(bounds, { padding: 50, maxZoom: 13 });
+          } else if (events.length === 1) {
+            // Un seul événement, centrer dessus
+            window.map.setCenter(events[0].coordinates);
+            window.map.setZoom(13);
+          } else {
+            // Pas d'événements, centrer sur Paris
+            window.map.setCenter([2.3522, 48.8566]);
+            window.map.setZoom(10);
           }
           
           // Signaler que la carte est prête
@@ -288,12 +434,55 @@ export function MapBoxInteractiveView({
           }));
         });
         
+        // Variables pour détecter le double-clic et clic long
+        window.lastClickTime = 0;
+        window.lastClickedEventId = null;
+        window.longPressTimers = {};
+        
+        // Fonction pour gérer le début du touch (clic long)
+        window.handleTouchStart = function(eventId) {
+          window.longPressTimers[eventId] = setTimeout(() => {
+            console.log('Clic long détecté sur marqueur:', eventId);
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'EVENT_LONG_PRESSED',
+              eventId: eventId
+            }));
+          }, 200); // 200ms pour le clic long
+        };
+        
+        // Fonction pour annuler le clic long
+        window.handleTouchEnd = function(eventId) {
+          if (window.longPressTimers[eventId]) {
+            clearTimeout(window.longPressTimers[eventId]);
+            delete window.longPressTimers[eventId];
+          }
+        };
+        
         // Fonction pour sélectionner un événement
         window.selectEvent = function(eventId) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'EVENT_SELECTED',
-            eventId: eventId
-          }));
+          // Annuler le timer de clic long car on a un clic normal
+          window.handleTouchEnd(eventId);
+          
+          const currentTime = Date.now();
+          const timeDifference = currentTime - window.lastClickTime;
+          
+          // Détecter le double-clic (moins de 500ms)
+          if (timeDifference < 500 && window.lastClickedEventId === eventId) {
+            console.log('Double-clic détecté sur marqueur:', eventId);
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'EVENT_DOUBLE_CLICKED',
+              eventId: eventId
+            }));
+          } else {
+            console.log('Simple clic sur marqueur:', eventId);
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'EVENT_SELECTED',
+              eventId: eventId
+            }));
+          }
+          
+          window.lastClickTime = currentTime;
+          window.lastClickedEventId = eventId;
         };
         
         // Gérer les erreurs de chargement
@@ -304,6 +493,120 @@ export function MapBoxInteractiveView({
             error: e.error.message
           }));
         });
+        
+        // Fonction de géolocalisation améliorée
+        window.triggerGeolocation = function() {
+          console.log('triggerGeolocation called');
+          
+          if (!navigator.geolocation) {
+            console.error('Geolocation not supported');
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'GEOLOCATION_ERROR',
+              error: 'Geolocation not supported'
+            }));
+            return;
+          }
+          
+          console.log('Requesting geolocation...');
+          navigator.geolocation.getCurrentPosition(
+            function(position) {
+              const { latitude, longitude } = position.coords;
+              console.log('Geolocation success:', latitude, longitude);
+              
+              // Notify parent of success
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'GEOLOCATION_SUCCESS',
+                latitude: latitude,
+                longitude: longitude
+              }));
+              
+              if (window.map) {
+                console.log('Centering map on user location');
+                window.map.flyTo({
+                  center: [longitude, latitude],
+                  zoom: 16,
+                  duration: 1500
+                });
+                
+                // Remove previous user marker
+                if (window.userMarker) {
+                  window.userMarker.remove();
+                }
+                
+                // Add user marker
+                window.userMarker = new mapboxgl.Marker({
+                  color: '#007AFF',
+                  scale: 0.8
+                })
+                .setLngLat([longitude, latitude])
+                .setPopup(new mapboxgl.Popup().setHTML('<div style="text-align: center; font-weight: bold;">📍 Votre position</div>'))
+                .addTo(window.map);
+              }
+            },
+            function(error) {
+              console.error('Geolocation error:', error.code, error.message);
+              let errorMessage = 'Erreur de localisation';
+              switch(error.code) {
+                case error.PERMISSION_DENIED:
+                  errorMessage = 'Permission de localisation refusée';
+                  break;
+                case error.POSITION_UNAVAILABLE:
+                  errorMessage = 'Position indisponible';
+                  break;
+                case error.TIMEOUT:
+                  errorMessage = 'Timeout de localisation';
+                  break;
+              }
+              
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'GEOLOCATION_ERROR',
+                error: errorMessage
+              }));
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 300000
+            }
+          );
+        };
+        
+        // Exposer la fonction de géolocalisation
+        window.getCurrentLocation = async function() {
+          try {
+            navigator.geolocation.getCurrentPosition(function(position) {
+              const { latitude, longitude } = position.coords;
+              
+              window.map.flyTo({
+                center: [longitude, latitude],
+                zoom: 15,
+                duration: 1500
+              });
+              
+              // Supprimer le marqueur utilisateur précédent
+              if (window.userMarker) {
+                window.userMarker.remove();
+              }
+              
+              // Ajouter le nouveau marqueur utilisateur
+              window.userMarker = new mapboxgl.Marker({
+                color: '#007AFF',
+                scale: 0.8
+              })
+              .setLngLat([longitude, latitude])
+              .setPopup(new mapboxgl.Popup().setHTML('<div style="text-align: center; font-weight: bold;">📍 Votre position</div>'))
+              .addTo(window.map);
+            }, function(error) {
+              console.error('Geolocation error:', error);
+            }, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 60000
+            });
+          } catch (error) {
+            console.error('Error getting location:', error);
+          }
+        };
       </script>
     </body>
     </html>
@@ -324,6 +627,40 @@ export function MapBoxInteractiveView({
           if (selectedEvent && onEventSelect) {
             onEventSelect(selectedEvent);
           }
+          break;
+          
+        case 'EVENT_DOUBLE_CLICKED':
+          const doubleClickedEvent = events.find(e => e.id === data.eventId);
+          if (doubleClickedEvent) {
+            console.log('Double-clic sur marqueur, ouverture événement:', data.eventId);
+            // Notifier le parent pour ouvrir l'événement
+            if (onEventSelect) {
+              onEventSelect(doubleClickedEvent, true); // true = double-clic
+            }
+          }
+          break;
+          
+        case 'EVENT_LONG_PRESSED':
+          const longPressedEvent = events.find(e => e.id === data.eventId);
+          if (longPressedEvent) {
+            console.log('Clic long sur marqueur, ouverture événement:', data.eventId);
+            // Notifier le parent pour ouvrir l'événement
+            if (onEventSelect) {
+              onEventSelect(longPressedEvent, true); // true = clic long
+            }
+          }
+          break;
+          
+        case 'GEOLOCATION_SUCCESS':
+          console.log('Geolocation successful from WebView');
+          setIsLocating(false);
+          break;
+          
+        case 'GEOLOCATION_ERROR':
+          console.log('Geolocation failed from WebView, trying native API');
+          setIsLocating(false);
+          // Try native geolocation as fallback
+          getCurrentLocation();
           break;
           
         case 'MAP_ERROR':
@@ -359,24 +696,11 @@ export function MapBoxInteractiveView({
         }}
       />
 
-      {/* Contrôles */}
-      <View style={styles.controls}>
-        <TouchableOpacity
-          style={[styles.controlButton, isLocating && styles.controlButtonActive]}
-          onPress={getCurrentLocation}
-          disabled={isLocating}
-        >
-          <Ionicons
-            name={isLocating ? "hourglass" : "locate"}
-            size={20}
-            color={isLocating ? "#007AFF" : "#666"}
-          />
-        </TouchableOpacity>
-      </View>
+      {/* Contrôles supprimés - gérés depuis le parent */}
 
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -397,30 +721,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
-  controls: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 8,
-    padding: 4,
-  },
-  controlButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  controlButtonActive: {
-    backgroundColor: '#F0F8FF',
-  },
+  // Contrôles supprimés - gérés depuis le parent
   infoMessage: {
     flexDirection: 'row',
     alignItems: 'center',

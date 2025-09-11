@@ -41,3 +41,24 @@ export const getSportIconColor = (sport: Sport): string => {
 
   return sportColorMap[sport] || '#007AFF';
 };
+
+/**
+ * Gets sport emoji based on sport type
+ */
+export const getSportEmoji = (sport: string): string => {
+  const sportEmojiMap: Record<string, string> = {
+    'football': '⚽',
+    'basketball': '🏀',
+    'tennis': '🎾',
+    'volleyball': '🏐',
+    'badminton': '🏸',
+    'handball': '🤾',
+    'ping-pong': '🏓',
+    'running': '🏃',
+    'cycling': '🚴',
+    'swimming': '🏊',
+    'other': '🏃'
+  };
+
+  return sportEmojiMap[sport.toLowerCase()] || '🏃';
+};

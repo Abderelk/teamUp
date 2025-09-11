@@ -22,7 +22,8 @@ import { useRealtimeEvents } from '../../src/hooks/useRealtimeEvents';
 import { NotificationBadge } from '../../src/components/ui/NotificationBadge';
 import { getSkillLevelIcon, getSkillLevelColor } from '../../src/utils/skillLevel';
 import { getSportIcon, getSportIconColor } from '../../src/utils/sportIcons';
-import { MapBoxInteractiveView } from '../../src/components/ui/MapBoxInteractiveView';
+import { WebMapView } from '../../src/components/maps/WebMapView';
+import { NativeMapsView } from '../../src/components/maps/NativeMapsView';
 import { Event, Sport } from '../../src/types';
 import ChatIntegrationService from '../../src/services/chatIntegrationService';
 import ChatNotificationBadge from '../../src/components/chat/ChatNotificationBadge';
@@ -41,6 +42,8 @@ export default function EventsScreen() {
   const mapViewRef = useRef<any>(null);
   const [lastTapTime, setLastTapTime] = useState<number>(0);
   const [lastTappedEventId, setLastTappedEventId] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<any>(null);
+  const [currentZoom, setCurrentZoom] = useState<number>(12);
 
   // Auto-select first event when entering map mode (only once)
   const [hasAutoSelected, setHasAutoSelected] = useState(false);
@@ -58,6 +61,15 @@ export default function EventsScreen() {
       setHasAutoSelected(false);
     }
   }, [showMap, events, selectedEventId, hasAutoSelected]);
+
+  const handleEventPress = (event: Event) => {
+    setSelectedEventId(event.id);
+  };
+
+  const handleRegionChange = (region: any) => {
+    const zoom = Math.log2(360 / region.latitudeDelta);
+    setCurrentZoom(zoom);
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -393,109 +405,104 @@ export default function EventsScreen() {
         <View style={styles.splitViewContainer}>
           {/* Static Interactive Map - EN HAUT */}
           <View style={styles.staticMapContainer}>
-            <MapBoxInteractiveView
-              ref={mapViewRef}
-              events={events.filter(event => 
-                event.location.coordinates?.latitude && 
-                event.location.coordinates?.longitude
-              ).map(event => ({
-                id: event.id,
-                sport: event.sport as string,
-                location: event.location,
-                title: event.title,
-              }))}
-              selectedEventId={selectedEventId}
-              onEventSelect={(event, isDoubleClickOrLongPress) => {
-                if (isDoubleClickOrLongPress) {
-                  console.log('Double-clic ou clic long sur marqueur, ouverture événement:', event.id);
-                  router.push(`/event/${event.id}` as any);
-                } else {
+            {Platform.OS === 'web' ? (
+              <WebMapView
+                events={events.filter(event => 
+                  event.location.coordinates?.latitude && 
+                  event.location.coordinates?.longitude
+                )}
+                onEventSelect={(event) => {
+                  console.log('Event selected from web map:', event.id);
                   setSelectedEventId(event.id);
-                }
-              }}
-              style={styles.staticMap}
-            />
-            
-            {/* Boutons positionnés dans la zone carte */}
-            <View style={styles.mapLocationButton} pointerEvents="box-none">
-              <TouchableOpacity 
-                style={[styles.locationButton, isLocating && styles.locationButtonActive]}
-                onPress={async () => {
-                  console.log('Location button pressed');
-                  setIsLocating(true);
-                  
-                  try {
-                    // Essayer d'abord l'API native
-                    const { status } = await Location.requestForegroundPermissionsAsync();
-                    if (status !== 'granted') {
-                      Alert.alert(
-                        'Permission refusée',
-                        'L\'autorisation de localisation est nécessaire pour cette fonctionnalité.'
-                      );
-                      setIsLocating(false);
-                      return;
-                    }
-
-                    const location = await Location.getCurrentPositionAsync({
-                      accuracy: Location.Accuracy.High,
-                      timeout: 15000,
-                    });
-                    
-                    const { latitude, longitude } = location.coords;
-                    console.log('Native geolocation success:', latitude, longitude);
-                    
-                    // Centrer la carte via JavaScript
-                    if (mapViewRef.current?.injectJavaScript) {
-                      const js = `
-                        if (window.map) {
-                          console.log('Centering map on user location:', [${longitude}, ${latitude}]);
-                          window.map.flyTo({
-                            center: [${longitude}, ${latitude}],
-                            zoom: 16,
-                            duration: 1500
-                          });
-                          
-                          // Remove previous user marker
-                          if (window.userMarker) {
-                            window.userMarker.remove();
-                          }
-                          
-                          // Add user marker
-                          window.userMarker = new mapboxgl.Marker({
-                            color: '#007AFF',
-                            scale: 0.8
-                          })
-                          .setLngLat([${longitude}, ${latitude}])
-                          .setPopup(new mapboxgl.Popup().setHTML('<div style="text-align: center; font-weight: bold;">📍 Votre position</div>'))
-                          .addTo(window.map);
-                          
-                          console.log('User marker added');
-                        } else {
-                          console.log('window.map not available');
-                        }
-                      `;
-                      mapViewRef.current.injectJavaScript(js);
-                    } else {
-                      console.log('mapViewRef.current.injectJavaScript not available');
-                    }
-                  } catch (error) {
-                    console.error('Geolocation error:', error);
-                    Alert.alert('Erreur', 'Impossible d\'obtenir votre position.');
-                  } finally {
-                    setIsLocating(false);
-                  }
                 }}
-                onStartShouldSetResponder={() => true}
-                activeOpacity={0.8}
-                disabled={isLocating}
-              >
-                <Ionicons 
-                  name={isLocating ? "hourglass" : "locate"} 
-                  size={20} 
-                  color="#FFFFFF" 
-                />
-              </TouchableOpacity>
-            </View>
+                initialRegion={userLocation || {
+                  latitude: 48.8566,
+                  longitude: 2.3522,
+                  latitudeDelta: 0.0922,
+                  longitudeDelta: 0.0421,
+                }}
+                selectedEventId={selectedEventId}
+                style={styles.staticMap}
+              />
+            ) : (
+              <NativeMapsView
+                ref={mapViewRef}
+                events={events.filter(event => 
+                  event.location.coordinates?.latitude && 
+                  event.location.coordinates?.longitude
+                )}
+                userLocation={userLocation}
+                locationPermission={true}
+                currentZoom={currentZoom}
+                colors={colors}
+                theme={isDarkMode ? 'dark' : 'light'}
+                onEventPress={handleEventPress}
+                onRegionChange={handleRegionChange}
+                onNavigateToEvent={(eventId) => router.push(`/event/${eventId}` as any)}
+                mapRef={mapViewRef}
+              />
+            )}
+            
+            {/* Boutons positionnés dans la zone carte - seulement sur mobile car web a ses propres contrôles */}
+            {Platform.OS !== 'web' && (
+              <View style={styles.mapLocationButton} pointerEvents="box-none">
+                <TouchableOpacity 
+                  style={[styles.locationButton, isLocating && styles.locationButtonActive]}
+                  onPress={async () => {
+                    console.log('Location button pressed');
+                    setIsLocating(true);
+                    
+                    try {
+                      const { status } = await Location.requestForegroundPermissionsAsync();
+                      if (status !== 'granted') {
+                        Alert.alert(
+                          'Permission refusée',
+                          'L\'autorisation de localisation est nécessaire pour cette fonctionnalité.'
+                        );
+                        setIsLocating(false);
+                        return;
+                      }
+
+                      const location = await Location.getCurrentPositionAsync({
+                        accuracy: Location.Accuracy.High,
+                        timeout: 15000,
+                      });
+                      
+                      const { latitude, longitude } = location.coords;
+                      console.log('Native geolocation success:', latitude, longitude);
+                      
+                      const region = {
+                        latitude,
+                        longitude,
+                        latitudeDelta: 0.01,
+                        longitudeDelta: 0.01,
+                      };
+                      
+                      setUserLocation(region);
+                      
+                      // Center map on user location
+                      if (mapViewRef.current?.animateToRegion) {
+                        mapViewRef.current.animateToRegion(region, 1000);
+                      }
+                    } catch (error) {
+                      console.error('Geolocation error:', error);
+                      Alert.alert('Erreur', 'Impossible d\'obtenir votre position.');
+                    } finally {
+                      setIsLocating(false);
+                    }
+                  }}
+                  onStartShouldSetResponder={() => true}
+                  activeOpacity={0.8}
+                  disabled={isLocating}
+                >
+                  <Ionicons 
+                    name={isLocating ? "hourglass" : "locate"} 
+                    size={20} 
+                    color="#FFFFFF" 
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
             
             <View style={styles.mapCreateButton} pointerEvents="box-none">
               <TouchableOpacity 

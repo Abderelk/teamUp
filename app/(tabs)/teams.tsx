@@ -538,15 +538,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
+    paddingTop: 84, // 50 + 34 zone de sécurité
     borderBottomWidth: 1,
-    ...Platform.select({
-      ios: {
-        paddingTop: 50,
-      },
-      android: {
-        paddingTop: 16,
-      },
-    }),
   },
   headerTitle: {
     fontSize: 24,
@@ -573,10 +566,12 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
+    paddingBottom: 84, // 50 + 34 zone de sécurité
   },
   emptyList: {
     flex: 1,
     padding: 16,
+    paddingBottom: 84, // 50 + 34 zone de sécurité
   },
   emptyContainer: {
     flex: 1,
@@ -687,12 +682,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
+    paddingTop: 84, // 50 + 34 zone de sécurité unifiée
     borderBottomWidth: 1,
-    ...Platform.select({
-      ios: {
-        paddingTop: 50,
-      },
-    }),
   },
   modalCancelText: {
     fontSize: 16,

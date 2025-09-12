@@ -609,6 +609,7 @@ Membres: ${team.members.filter(m => m.isActive).length}/${team.maxMembers}`;
 
       <ScrollView 
         style={styles.content}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -1048,6 +1049,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  scrollContent: {
+    paddingTop: 34,
+    paddingBottom: 34,
+  },
   teamHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1210,6 +1215,8 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
+    paddingTop: 34,
+    paddingBottom: 34,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1271,6 +1278,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 34,
+    paddingBottom: 34,
   },
   roleModalContent: {
     width: '80%',

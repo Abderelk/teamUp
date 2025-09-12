@@ -299,7 +299,7 @@ export default function TeamsSearchScreen() {
         data={filteredTeams}
         renderItem={renderTeamItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={filteredTeams.length === 0 ? styles.emptyList : styles.list}
+        contentContainerStyle={[filteredTeams.length === 0 ? styles.emptyList : styles.list, styles.listContentContainer]}
         ListEmptyComponent={!loading ? renderEmptyState : null}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -314,8 +314,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  listContentContainer: {
+    paddingTop: 34,
+    paddingBottom: 34,
+  },
   filtersContainer: {
     padding: 16,
+    paddingTop: 50,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
   },

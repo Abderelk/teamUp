@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   },
   zoomControls: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 54, // 20 + 34 zone de sécurité
     right: 20,
     borderRadius: 8,
     elevation: 4,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   },
   recenterButton: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 54, // 20 + 34 zone de sécurité
     left: 20,
     width: 48,
     height: 48,
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   },
   eventDetails: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 114, // 80 + 34 zone de sécurité
     left: 20,
     right: 20,
     borderRadius: 12,

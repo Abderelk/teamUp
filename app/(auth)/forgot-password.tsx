@@ -199,7 +199,8 @@ const styles = StyleSheet.create({
     scrollContainer: {
         flexGrow: 1,
         paddingHorizontal: 24,
-        paddingVertical: 32,
+        paddingTop: 34, // zone de sécurité
+        paddingBottom: 34, // zone de sécurité
     },
     header: {
         alignItems: 'center',

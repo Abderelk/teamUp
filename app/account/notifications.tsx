@@ -160,7 +160,7 @@ export default function NotificationsScreen() {
           ),
         }}
       />
-      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.scrollContent}>
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Preferences de notification</Text>
           <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
@@ -264,6 +264,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F2F2F7',
   },
+  scrollContent: {
+    paddingTop: 34, // zone de sécurité
+    paddingBottom: 34, // zone de sécurité
+  },
   saveButtonText: {
     color: '#007AFF',
     fontSize: 17,
@@ -271,7 +275,7 @@ const styles = StyleSheet.create({
   },
   section: {
     backgroundColor: '#FFFFFF',
-    marginTop: 20,
+    marginBottom: 20,
     paddingHorizontal: 20,
     paddingVertical: 20,
   },
@@ -315,7 +319,7 @@ const styles = StyleSheet.create({
   },
   infoSection: {
     backgroundColor: '#FFFFFF',
-    marginTop: 20,
+    marginBottom: 20,
     paddingHorizontal: 20,
     paddingVertical: 16,
   },

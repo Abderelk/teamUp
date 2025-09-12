@@ -142,7 +142,8 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingTop: 74, // 40 + 34 zone de sécurité
+    paddingBottom: 40,
     paddingHorizontal: 20,
     marginBottom: 20,
   },
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   signOutContainer: {
-    marginBottom: 40,
+    marginBottom: 74, // 40 + 34 zone de sécurité
   },
   signOutButton: {
     flexDirection: 'row',

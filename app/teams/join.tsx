@@ -153,10 +153,14 @@ export default function JoinTeamScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 34,
+    paddingBottom: 34,
   },
   content: {
     flex: 1,
     padding: 20,
+    paddingTop: 54,
+    paddingBottom: 54,
     justifyContent: 'center',
   },
   card: {

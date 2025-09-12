@@ -256,7 +256,7 @@ export default function EventDetailScreen() {
         }}
       />
       
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Header de l'événement */}
         <View style={styles.headerSection}>
           <View style={styles.titleContainer}>
@@ -516,6 +516,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F2F2F7',
   },
+  scrollContent: {
+    paddingTop: 34,
+    paddingBottom: 34,
+  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -681,6 +685,7 @@ const styles = StyleSheet.create({
   actionButtonsContainer: {
     backgroundColor: '#FFFFFF',
     padding: 20,
+    paddingBottom: 34,
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
   },

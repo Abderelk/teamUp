@@ -158,7 +158,7 @@ export default function SearchScreen() {
         </View>
       ) : (
         /* Vue liste */
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           {/* Barre de recherche */}
           <View style={styles.searchContainer}>
             <SearchBar
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 94,
     paddingBottom: 20,
     backgroundColor: '#FFFFFF',
   },
@@ -384,13 +384,16 @@ const styles = StyleSheet.create({
   },
   floatingSearchContainer: {
     position: 'absolute',
-    top: 20,
+    top: 70,
     left: 20,
     right: 20,
     zIndex: 1000,
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 34,
   },
   searchContainer: {
     paddingHorizontal: 20,

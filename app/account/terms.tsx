@@ -8,8 +8,10 @@ import {
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../src/contexts/ThemeContext';
 
 export default function TermsScreen() {
+  const { colors } = useTheme();
   const lastUpdated = "15 janvier 2024";
 
   const sections = [
@@ -71,33 +73,37 @@ export default function TermsScreen() {
           headerShown: true,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={24} color="#007AFF" />
+              <Ionicons name="arrow-back" size={24} color={colors.accent} />
             </TouchableOpacity>
           ),
+          headerStyle: {
+            backgroundColor: colors.surface,
+          },
+          headerTintColor: colors.text,
         }}
       />
-      <ScrollView style={styles.container}>
-        <View style={styles.headerSection}>
-          <Text style={styles.title}>Conditions d&apos;utilisation</Text>
-          <Text style={styles.subtitle}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.scrollContent}>
+        <View style={[styles.headerSection, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.title, { color: colors.text }]}>Conditions d&apos;utilisation</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Dernière mise à jour : {lastUpdated}
           </Text>
-          <Text style={styles.intro}>
+          <Text style={[styles.intro, { color: colors.text }]}>
             Bienvenue sur TeamUp. Ces conditions d&apos;utilisation régissent votre utilisation de notre application mobile et de nos services.
           </Text>
         </View>
 
         {sections.map((section, index) => (
-          <View key={index} style={styles.section}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            <Text style={styles.sectionContent}>{section.content}</Text>
+          <View key={index} style={[styles.section, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.title}</Text>
+            <Text style={[styles.sectionContent, { color: colors.text }]}>{section.content}</Text>
           </View>
         ))}
 
-        <View style={styles.footerSection}>
+        <View style={[styles.footerSection, { backgroundColor: colors.surface }]}>
           <View style={styles.infoContainer}>
-            <Ionicons name="information-circle-outline" size={20} color="#8E8E93" />
-            <Text style={styles.footerText}>
+            <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>
               En continuant à utiliser TeamUp après toute modification de ces conditions, vous acceptez les conditions modifiées.
             </Text>
           </View>
@@ -112,9 +118,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F2F2F7',
   },
+  scrollContent: {
+    paddingTop: 34, // zone de sécurité
+    paddingBottom: 34, // zone de sécurité
+  },
   headerSection: {
     backgroundColor: '#FFFFFF',
-    marginTop: 0,
+    marginBottom: 20,
     paddingHorizontal: 20,
     paddingVertical: 30,
   },
@@ -139,7 +149,7 @@ const styles = StyleSheet.create({
   },
   section: {
     backgroundColor: '#FFFFFF',
-    marginTop: 20,
+    marginBottom: 20,
     paddingHorizontal: 20,
     paddingVertical: 20,
   },
@@ -157,8 +167,7 @@ const styles = StyleSheet.create({
   },
   footerSection: {
     backgroundColor: '#FFFFFF',
-    marginTop: 20,
-    marginBottom: 40,
+    marginBottom: 20,
     paddingHorizontal: 20,
     paddingVertical: 20,
   },

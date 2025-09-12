@@ -104,34 +104,40 @@ export default function ProfilePictureScreen() {
         </View>
 
         {showAvatarSelector && (
-          <View style={styles.avatarSelectorContainer}>
-            <View style={styles.selectorHeader}>
-              <Text style={styles.selectorTitle}>Choisissez votre avatar</Text>
-              <TouchableOpacity 
-                onPress={() => setShowAvatarSelector(false)}
-                style={styles.closeSelector}
-              >
-                <Ionicons name="close" size={24} color={Colors.light.icon} />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.avatarGrid} showsVerticalScrollIndicator={false}>
-              <View style={styles.avatarRow}>
-                {avatarOptions.map((avatar) => (
-                  <TouchableOpacity
-                    key={avatar.id}
-                    style={[
-                      styles.avatarOption,
-                      { backgroundColor: avatar.color },
-                      selectedAvatar === avatar.id && styles.avatarOptionSelected
-                    ]}
-                    onPress={() => selectAvatar(avatar.id)}
-                  >
-                    <Ionicons name={avatar.icon as any} size={32} color="white" />
-                    <Text style={styles.avatarOptionText}>{avatar.name}</Text>
-                  </TouchableOpacity>
-                ))}
+          <View style={styles.avatarSelectorOverlay}>
+            <TouchableOpacity 
+              style={styles.avatarSelectorBackdrop}
+              onPress={() => setShowAvatarSelector(false)}
+            />
+            <View style={styles.avatarSelectorContainer}>
+              <View style={styles.selectorHeader}>
+                <Text style={styles.selectorTitle}>Choisissez votre avatar</Text>
+                <TouchableOpacity 
+                  onPress={() => setShowAvatarSelector(false)}
+                  style={styles.closeSelector}
+                >
+                  <Ionicons name="close" size={24} color={Colors.light.icon} />
+                </TouchableOpacity>
               </View>
-            </ScrollView>
+              <ScrollView style={styles.avatarGrid} showsVerticalScrollIndicator={false}>
+                <View style={styles.avatarRow}>
+                  {avatarOptions.map((avatar) => (
+                    <TouchableOpacity
+                      key={avatar.id}
+                      style={[
+                        styles.avatarOption,
+                        { backgroundColor: avatar.color },
+                        selectedAvatar === avatar.id && styles.avatarOptionSelected
+                      ]}
+                      onPress={() => selectAvatar(avatar.id)}
+                    >
+                      <Ionicons name={avatar.icon as any} size={32} color="white" />
+                      <Text style={styles.avatarOptionText}>{avatar.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
           </View>
         )}
 
@@ -225,14 +231,33 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
+  avatarSelectorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+    justifyContent: 'flex-end',
+  },
+  avatarSelectorBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
   avatarSelectorContainer: {
     backgroundColor: 'white',
-    borderRadius: 16,
-    margin: 16,
-    padding: 16,
-    maxHeight: 400,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 50,
+    height: '85%',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 6,
@@ -255,7 +280,8 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   avatarGrid: {
-    maxHeight: 280,
+    flex: 1,
+    marginTop: 8,
   },
   avatarRow: {
     flexDirection: 'row',
@@ -263,13 +289,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   avatarOption: {
-    width: '30%',
+    width: '31%',
     aspectRatio: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
-    padding: 8,
+    marginBottom: 16,
+    padding: 12,
   },
   avatarOptionSelected: {
     borderWidth: 3,

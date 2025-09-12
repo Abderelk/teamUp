@@ -336,7 +336,7 @@ export default function EditEventScreen() {
         }}
       />
       
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         {/* Informations générales */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -769,6 +769,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F2F2F7',
   },
+  scrollContent: {
+    paddingTop: 34,
+    paddingBottom: 34,
+  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -870,6 +874,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '70%',
+    paddingBottom: 34,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -908,14 +913,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 12,
     marginHorizontal: 20,
-    marginTop: 50,
+    marginTop: 100,
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
-    maxHeight: '80%',
+    maxHeight: '70%',
   },
   pickerHeader: {
     flexDirection: 'row',
@@ -993,6 +998,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
     paddingVertical: 16,
+    paddingBottom: 34,
     borderTopWidth: 1,
     borderTopColor: '#F2F2F7',
     marginTop: 20,

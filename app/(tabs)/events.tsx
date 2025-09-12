@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 94, // 60 + 34 zone de sécurité
     paddingBottom: 20,
     backgroundColor: 'transparent', // Will be overridden by dynamic colors
   },
@@ -669,6 +669,7 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 20,
     paddingTop: 10,
+    paddingBottom: 54, // 20 + 34 zone de sécurité
   },
   eventCard: {
     backgroundColor: 'transparent', // Will be overridden by dynamic colors
@@ -803,7 +804,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 58, // 24 + 34 zone de sécurité
     right: 24,
     width: 56,
     height: 56,
@@ -829,6 +830,7 @@ const styles = StyleSheet.create({
   compactListContent: {
     padding: 12,
     paddingTop: 8,
+    paddingBottom: 46, // 12 + 34 zone de sécurité
   },
   staticMapContainer: {
     flex: 0.35,
@@ -844,14 +846,14 @@ const styles = StyleSheet.create({
   },
   mapLocationButton: {
     position: 'absolute',
-    bottom: 8,
+    bottom: 42, // 8 + 34 zone de sécurité
     left: 8,
     zIndex: 10000,
     elevation: 1000,
   },
   mapCreateButton: {
     position: 'absolute',
-    bottom: 8,
+    bottom: 42, // 8 + 34 zone de sécurité
     right: 8,
     zIndex: 10000,
     elevation: 1000,

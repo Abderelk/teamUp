@@ -225,7 +225,8 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         justifyContent: 'center',
         paddingHorizontal: 24,
-        paddingVertical: 32,
+        paddingTop: 34, // zone de sécurité
+        paddingBottom: 34, // zone de sécurité
     },
     header: {
         alignItems: 'center',

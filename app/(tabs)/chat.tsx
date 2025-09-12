@@ -90,6 +90,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    paddingBottom: 34, // Zone de sécurité en bas
   },
   headerButton: {
     marginRight: 16,
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
   },
   floatingButton: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 58, // 24 + 34 zone de sécurité
     right: 24,
     width: 56,
     height: 56,

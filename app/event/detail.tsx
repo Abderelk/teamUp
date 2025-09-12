@@ -93,7 +93,7 @@ export default function EventDetailScreen() {
         }}
       />
       
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>{event.title}</Text>
           <Text style={styles.sport}>{SPORTS_TRANSLATIONS[event.sport]}</Text>
@@ -115,11 +115,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F2F2F7',
   },
+  scrollContent: {
+    paddingTop: 34,
+    paddingBottom: 34,
+  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F2F2F7',
+    paddingTop: 34,
+    paddingBottom: 34,
   },
   loadingText: {
     marginTop: 16,

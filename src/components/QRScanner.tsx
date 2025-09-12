@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     ...Platform.select({
       ios: {
-        paddingTop: 50,
+        paddingTop: 34,
       },
       android: {
         paddingTop: 16,

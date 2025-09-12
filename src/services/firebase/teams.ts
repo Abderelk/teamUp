@@ -13,8 +13,14 @@ import {
   arrayUnion,
   arrayRemove 
 } from 'firebase/firestore';
+import { Platform } from 'react-native';
 import { db } from './config';
 import { Team, CreateTeam, UpdateTeam, TeamMember, TeamRole, SPORTS } from '../../types';
+import { 
+  sendAndroidTeamJoinNotification,
+  sendAndroidTeamInviteNotification,
+  sendAndroidTeamUpdateNotification 
+} from '../androidAlternativeNotificationService';
 
 const TEAMS_COLLECTION = 'teams';
 
@@ -229,6 +235,23 @@ export const joinTeam = async (teamId: string, userId: string): Promise<void> =>
       members: arrayUnion(newMember),
       updatedAt: Timestamp.now()
     });
+
+    // Notification Android spécifique quand quelqu'un rejoint une équipe
+    if (Platform.OS === 'android') {
+      try {
+        // Récupérer le nom du nouveau membre (vous devrez adapter selon votre service users)
+        const memberName = 'Nouveau membre'; // À remplacer par le vrai nom
+        
+        // Notifier les autres membres de l'équipe
+        const teamMembers = team.members.filter(m => m.isActive && m.userId !== userId);
+        for (const member of teamMembers) {
+          // Pour chaque membre, envoyer une notification Android
+          await sendAndroidTeamJoinNotification(team.name, memberName, teamId);
+        }
+      } catch (notificationError) {
+        console.log('Erreur notification Android (non critique):', notificationError);
+      }
+    }
   } catch (error) {
     console.error('Erreur lors de l\'ajout à l\'équipe:', error);
     throw error;

@@ -1,21 +1,32 @@
 import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
+
+// Conditional import for expo-notifications (not supported in Expo Go Android)
+let Notifications: any = null;
+try {
+  if (Platform.OS !== 'android' || !__DEV__) {
+    Notifications = require('expo-notifications');
+  }
+} catch (error) {
+  console.log('expo-notifications not available in this environment');
+}
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { navigationService } from './navigationService';
-import { configureAndroidNotifications, getAndroidFCMToken, handleAndroidBackgroundNotification } from './androidNotificationService';
+import { configureAndroidAlternativeNotifications } from './androidAlternativeNotificationService';
 
-// Configuration des notifications
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Configuration des notifications (si disponible)
+if (Notifications) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 export interface FCMToken {
   token: string;
@@ -46,49 +57,49 @@ class FCMService {
 
       // Configuration spécifique pour Android
       if (Platform.OS === 'android') {
-        await configureAndroidNotifications();
-        handleAndroidBackgroundNotification();
+        await configureAndroidAlternativeNotifications();
       }
 
-      // Demander les permissions de notification
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
+      // Demander les permissions de notification (si disponible)
+      if (Notifications) {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
 
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-
-      if (finalStatus !== 'granted') {
-        console.log('Permission de notification refusée');
-        return null;
-      }
-
-      // Sur Android, essayer d'abord d'obtenir le token FCM natif
-      if (Platform.OS === 'android') {
-        const nativeToken = await getAndroidFCMToken();
-        if (nativeToken) {
-          this.nativeFCMToken = nativeToken;
-          console.log('Token FCM natif obtenu:', nativeToken.substring(0, 20) + '...');
-          return nativeToken;
+        if (existingStatus !== 'granted') {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
         }
+
+        if (finalStatus !== 'granted') {
+          console.log('Permission de notification refusée');
+          return null;
+        }
+      } else {
+        console.log('Notifications API non disponible - utilisation du service alternatif Android');
       }
 
-      // Fallback: Obtenir le token Expo Push
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-      
-      if (!projectId) {
-        console.log('Project ID manquant dans la configuration Expo');
+      // Note: Using alternative notification service for Android
+
+      // Fallback: Obtenir le token Expo Push (si disponible)
+      if (Notifications) {
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+        
+        if (!projectId) {
+          console.log('Project ID manquant dans la configuration Expo');
+          return null;
+        }
+
+        const token = await Notifications.getExpoPushTokenAsync({
+          projectId,
+        });
+
+        this.expoPushToken = token.data;
+        console.log('Token Expo Push obtenu:', token.data.substring(0, 20) + '...');
+        return this.expoPushToken;
+      } else {
+        console.log('Service notifications Expo non disponible - utilisation du service alternatif Android');
         return null;
       }
-
-      const token = await Notifications.getExpoPushTokenAsync({
-        projectId,
-      });
-
-      this.expoPushToken = token.data;
-      console.log('Token Expo Push obtenu:', token.data.substring(0, 20) + '...');
-      return this.expoPushToken;
     } catch (error) {
       console.error('Erreur lors de l\'initialisation FCM:', error);
       return null;
@@ -145,8 +156,8 @@ class FCMService {
    * Configure les listeners pour les notifications
    */
   setupNotificationListeners() {
-    // Sur web, pas de support
-    if (Platform.OS === 'web') {
+    // Sur web ou si pas de Notifications API, pas de support
+    if (Platform.OS === 'web' || !Notifications) {
       return {
         notificationListener: null,
         responseListener: null,
@@ -182,7 +193,7 @@ class FCMService {
    * Nettoie les listeners
    */
   cleanup(listeners: { notificationListener: any; responseListener: any }) {
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== 'web' && Notifications) {
       if (listeners.notificationListener) {
         listeners.notificationListener.remove();
       }
@@ -204,8 +215,8 @@ class FCMService {
    */
   async sendLocalNotification(title: string, body: string, data?: any): Promise<void> {
     try {
-      if (Platform.OS === 'web') {
-        console.log('Notifications non supportées sur web');
+      if (Platform.OS === 'web' || !Notifications) {
+        console.log('Notifications non supportées dans cet environnement');
         return;
       }
 

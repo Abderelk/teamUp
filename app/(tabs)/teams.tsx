@@ -26,6 +26,7 @@ import {
   getUserTeams 
 } from '../../src/services/firebase/teams';
 import { useToast } from '../../src/hooks/useToast';
+import { useAndroidAlternativeNotifications } from '../../src/hooks/useAndroidAlternativeNotifications';
 import { getSportIcon, getSportIconColor } from '../../src/utils/sportIcons';
 import { Team, CreateTeam, SPORTS, Sport, TeamMember } from '../../src/types';
 import { Timestamp } from 'firebase/firestore';
@@ -35,6 +36,9 @@ export default function TeamsScreen() {
   const { colors } = useTheme();
   const { showToast } = useToast();
   const router = useRouter();
+  
+  // Hook spécifique Android pour les notifications équipes (alternatif)
+  const androidNotifications = useAndroidAlternativeNotifications();
   
   const [teams, setTeams] = useState<Team[]>([]);
   const [userTeams, setUserTeams] = useState<Team[]>([]);
@@ -179,6 +183,13 @@ export default function TeamsScreen() {
     try {
       await joinTeam(team.id, user.uid);
       showToast('Vous avez rejoint l\'équipe', 'success');
+      
+      // Notification Android spécifique
+      if (Platform.OS === 'android' && androidNotifications.hasPermissions) {
+        const userName = user.displayName || 'Un nouveau membre';
+        await androidNotifications.sendTeamJoin(team.name, userName, team.id);
+      }
+      
       // Recharger immédiatement après avoir rejoint
       await loadTeams();
     } catch (error: any) {

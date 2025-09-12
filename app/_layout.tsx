@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Platform } from 'react-native';
 import { useAuth } from '../src/hooks/useAuth';
 import { OnboardingProvider } from '../src/contexts/OnboardingContext';
 import { AlertProvider } from '../src/hooks/useAlert';
@@ -16,6 +16,7 @@ import InAppNotification from '../src/components/notifications/InAppNotification
 import { navigationService } from '../src/services/navigationService';
 import { ThemeProvider as TeamUpThemeProvider } from '../src/contexts/ThemeContext';
 import { TeamsProvider } from '../src/contexts/TeamsContext';
+import { AndroidProvider } from '../src/contexts/AndroidContext';
 
 function NotificationOverlay() {
   const { currentNotification, hideNotification } = useNotification();
@@ -128,6 +129,22 @@ export default function RootLayout() {
     return null;
   }
 
+  const AppContent = (
+    <>
+      <NotificationOverlay />
+      <Stack>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+        <Stack.Screen name="account" options={{ headerShown: false }} />
+        <Stack.Screen name="event" options={{ headerShown: false }} />
+        <Stack.Screen name="search" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+      <StatusBar style="auto" />
+    </>
+  );
+
   return (
     <TeamUpThemeProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -136,19 +153,13 @@ export default function RootLayout() {
             <InAppNotificationProvider>
               <ChatProvider>
                 <TeamsProvider>
-                  <NotificationOverlay />
-                  <Stack>
-                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-                    <Stack.Screen name="account" options={{ headerShown: false }} />
-                    <Stack.Screen name="event" options={{ headerShown: false }} />
-                    <Stack.Screen name="team" options={{ headerShown: false }} />
-                    <Stack.Screen name="teams" options={{ headerShown: false }} />
-                    <Stack.Screen name="search" options={{ headerShown: false }} />
-                    <Stack.Screen name="+not-found" />
-                  </Stack>
-                  <StatusBar style="auto" />
+                  {Platform.OS === 'android' ? (
+                    <AndroidProvider>
+                      {AppContent}
+                    </AndroidProvider>
+                  ) : (
+                    AppContent
+                  )}
                 </TeamsProvider>
               </ChatProvider>
             </InAppNotificationProvider>

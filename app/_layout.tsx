@@ -15,6 +15,7 @@ import { NotificationProvider as InAppNotificationProvider, useNotification } fr
 import InAppNotification from '../src/components/notifications/InAppNotification';
 import { navigationService } from '../src/services/navigationService';
 import { ThemeProvider as TeamUpThemeProvider } from '../src/contexts/ThemeContext';
+import { TeamsProvider } from '../src/contexts/TeamsContext';
 
 function NotificationOverlay() {
   const { currentNotification, hideNotification } = useNotification();
@@ -35,6 +36,7 @@ function NotificationOverlay() {
     />
   );
 }
+
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -79,8 +81,8 @@ export default function RootLayout() {
     const inAccountGroup = segments[0] === 'account';
     const inEventGroup = segments[0] === 'event';
     const inTeamGroup = segments[0] === 'team';
+    const inTeamsGroup = segments[0] === 'teams';
     const inSearchPage = segments[0] === 'search';
-    const inChatGroup = segments[0] === 'chat';
 
 
     // Utilisateur non authentifié
@@ -106,13 +108,13 @@ export default function RootLayout() {
         router.replace('/(onboarding)');
       }
     } else {
-      if (!inTabsGroup && !inAccountGroup && !inEventGroup && !inTeamGroup && !inSearchPage && !inChatGroup && lastRedirect !== 'main') {
+      if (!inTabsGroup && !inAccountGroup && !inEventGroup && !inTeamGroup && !inTeamsGroup && !inSearchPage && lastRedirect !== 'main') {
         setLastRedirect('main');
-        router.replace('/(tabs)/events');
+        router.replace('/(tabs)/teams');
       }
     }
 
-    if ((isAuthenticated && userProfile?.onboardingCompleted && (inTabsGroup || inAccountGroup || inEventGroup || inTeamGroup || inSearchPage || inChatGroup)) ||
+    if ((isAuthenticated && userProfile?.onboardingCompleted && (inTabsGroup || inAccountGroup || inEventGroup || inTeamGroup || inTeamsGroup || inSearchPage)) ||
         (isAuthenticated && !userProfile?.onboardingCompleted && inOnboardingGroup) ||
         (!isAuthenticated && inAuthGroup)) {
       if (lastRedirect) {
@@ -133,18 +135,21 @@ export default function RootLayout() {
           <OnboardingProvider>
             <InAppNotificationProvider>
               <ChatProvider>
-                <NotificationOverlay />
-                <Stack>
-                  <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-                  <Stack.Screen name="account" options={{ headerShown: false }} />
-                  <Stack.Screen name="event" options={{ headerShown: false }} />
-                  <Stack.Screen name="search" options={{ headerShown: false }} />
-                  <Stack.Screen name="chat" options={{ headerShown: false }} />
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-                <StatusBar style="auto" />
+                <TeamsProvider>
+                  <NotificationOverlay />
+                  <Stack>
+                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+                    <Stack.Screen name="account" options={{ headerShown: false }} />
+                    <Stack.Screen name="event" options={{ headerShown: false }} />
+                    <Stack.Screen name="team" options={{ headerShown: false }} />
+                    <Stack.Screen name="teams" options={{ headerShown: false }} />
+                    <Stack.Screen name="search" options={{ headerShown: false }} />
+                    <Stack.Screen name="+not-found" />
+                  </Stack>
+                  <StatusBar style="auto" />
+                </TeamsProvider>
               </ChatProvider>
             </InAppNotificationProvider>
           </OnboardingProvider>

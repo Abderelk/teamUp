@@ -182,9 +182,13 @@ class FCMService {
    * Nettoie les listeners
    */
   cleanup(listeners: { notificationListener: any; responseListener: any }) {
-    if (Platform.OS !== 'web' && listeners.notificationListener && listeners.responseListener) {
-      Notifications.removeNotificationSubscription(listeners.notificationListener);
-      Notifications.removeNotificationSubscription(listeners.responseListener);
+    if (Platform.OS !== 'web') {
+      if (listeners.notificationListener) {
+        listeners.notificationListener.remove();
+      }
+      if (listeners.responseListener) {
+        listeners.responseListener.remove();
+      }
     }
   }
 

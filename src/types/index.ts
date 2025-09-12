@@ -9,6 +9,7 @@ export type MessageType = 'text' | 'system' | 'image';
 export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
 export type ChatType = 'event';
 export type NotificationType = 'event_invite' | 'event_update' | 'event_cancelled' | 'chat_message' | 'general';
+export type TeamRole = 'member' | 'admin' | 'captain';
 
 // ===== INTERFACES GÉOLOCALISATION =====
 
@@ -133,6 +134,36 @@ export interface Event {
   updatedAt: Timestamp;
 }
 
+// ===== INTERFACES ÉQUIPES =====
+
+export interface TeamMember {
+  userId: string;
+  role: TeamRole;
+  joinedAt: Timestamp;
+  isActive: boolean;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  sport: string;
+  
+  // Membres de l'équipe
+  members: TeamMember[];
+  maxMembers: number;
+  
+  // Métadonnées
+  createdBy: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  isActive: boolean;
+  
+  // Options d'équipe
+  isPrivate: boolean; // Si true, nécessite une invitation pour rejoindre
+  inviteCode?: string; // Code d'invitation pour équipes privées
+  location?: EventLocation;
+}
 
 // ===== INTERFACES CHAT ET MESSAGES =====
 
@@ -238,11 +269,15 @@ export type CreateChatMessage = Omit<ChatMessage, 'id' | 'timestamp' | 'status'>
 export type CreateChat = Omit<Chat, 'id' | 'createdAt' | 'updatedAt' | 'lastMessage' | 'unreadCount'>;
 export type CreateNotification = Omit<Notification, 'id' | 'createdAt' | 'isRead'>;
 export type CreateVenue = Omit<Venue, 'id'>;
+export type CreateTeam = Omit<Team, 'id' | 'createdAt' | 'updatedAt' | 'members'> & {
+  members?: Omit<TeamMember, 'joinedAt'>[];
+};
 
 // Type pour les mises à jour (champs optionnels)
 export type UpdateUser = Partial<Omit<User, 'uid' | 'createdAt'>> & { updatedAt: Timestamp };
 export type UpdateEvent = Partial<Omit<Event, 'id' | 'createdAt'>> & { updatedAt: Timestamp };
 export type UpdateSportProfile = Partial<Omit<SportProfile, 'userId' | 'createdAt'>> & { updatedAt: Timestamp };
+export type UpdateTeam = Partial<Omit<Team, 'id' | 'createdAt' | 'createdBy'>> & { updatedAt: Timestamp };
 
 // Types pour les filtres et recherches
 export interface EventFilters {

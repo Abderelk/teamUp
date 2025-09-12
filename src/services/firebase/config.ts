@@ -1,7 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuration Firebase avec vos variables d'environnement
 const firebaseConfig = {
@@ -27,9 +28,11 @@ console.log('App ID:', firebaseConfig.appId ? '✅ Present' : '❌ Missing');
 console.log('🔥 Initializing Firebase app...');
 const app = initializeApp(firebaseConfig);
 
-// Initialiser Auth
+// Initialiser Auth avec AsyncStorage pour la persistance
 console.log('🔐 Initializing Firebase Auth...');
-export const auth = getAuth(app);
+export const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+});
 
 // Initialiser Firestore avec des settings optimisés
 console.log('📄 Initializing Firestore...');

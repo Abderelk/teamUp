@@ -1,11 +1,11 @@
-import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
 import Constants from 'expo-constants';
-import { doc, updateDoc, Timestamp } from 'firebase/firestore';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import { doc, Timestamp, updateDoc } from 'firebase/firestore';
+import { Platform } from 'react-native';
+import { configureAndroidNotifications, getAndroidFCMToken, handleAndroidBackgroundNotification } from './androidNotificationService';
 import { db } from './firebase/config';
 import { navigationService } from './navigationService';
-import { configureAndroidNotifications, getAndroidFCMToken, handleAndroidBackgroundNotification } from './androidNotificationService';
 
 // Configuration des notifications
 Notifications.setNotificationHandler({
@@ -76,7 +76,7 @@ class FCMService {
 
       // Fallback: Obtenir le token Expo Push
       const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-      
+
       if (!projectId) {
         console.log('Project ID manquant dans la configuration Expo');
         return null;
@@ -100,14 +100,14 @@ class FCMService {
    */
   async saveTokenForUser(userId: string): Promise<void> {
     const currentToken = this.nativeFCMToken || this.expoPushToken;
-    
+
     if (!currentToken) {
       throw new Error('Token FCM non disponible');
     }
 
     try {
       const userRef = doc(db, 'users', userId);
-      
+
       const fcmToken: FCMToken = {
         token: currentToken,
         platform: Platform.OS as 'ios' | 'android',
@@ -130,7 +130,7 @@ class FCMService {
   async removeTokenForUser(userId: string): Promise<void> {
     try {
       const userRef = doc(db, 'users', userId);
-      
+
       await updateDoc(userRef, {
         fcmToken: null,
         updatedAt: Timestamp.now(),
@@ -145,48 +145,37 @@ class FCMService {
    * Configure les listeners pour les notifications
    */
   setupNotificationListeners() {
-    // Sur web, pas de support
-    if (Platform.OS === 'web') {
-      return {
-        notificationListener: null,
-        responseListener: null,
-      };
-    }
+  if (Platform.OS === 'web') return {
+    notificationListener: null,
+    responseListener: null,
+  };
 
-    // Listener pour les notifications reçues en foreground (mobile)
-    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
-      const data = notification.request.content.data;
-      
-      if (data?.type === 'chat_message') {
-        console.log('💬 Nouveau message de chat reçu');
-      }
-    });
+  const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+    const data = notification.request.content.data;
+    if (data?.type === 'chat_message') console.log('💬 Nouveau message de chat reçu');
+  });
 
-    // Listener pour les interactions avec les notifications (mobile)
-    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-      const data = response.notification.request.content.data;
-      
-      // Délai pour s'assurer que l'app est complètement chargée
-      setTimeout(() => {
-        navigationService.handleNotificationNavigation(data);
-      }, 500);
-    });
+  const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+    const data = response.notification.request.content.data;
+    setTimeout(() => navigationService.handleNotificationNavigation(data), 500);
+  });
 
-    return {
-      notificationListener,
-      responseListener,
-    };
+  // Retourner directement les fonctions de désabonnement
+  return {
+    notificationListener,
+    responseListener,
+  };
+}
+
+cleanup(listeners: {
+  notificationListener?: () => void;
+  responseListener?: () => void;
+}) {
+  if (Platform.OS !== 'web') {
+    listeners.notificationListener?.();
+    listeners.responseListener?.();
   }
-
-  /**
-   * Nettoie les listeners
-   */
-  cleanup(listeners: { notificationListener: any; responseListener: any }) {
-    if (Platform.OS !== 'web' && listeners.notificationListener && listeners.responseListener) {
-      Notifications.removeNotificationSubscription(listeners.notificationListener);
-      Notifications.removeNotificationSubscription(listeners.responseListener);
-    }
-  }
+}
 
   /**
    * Obtient le token actuel
